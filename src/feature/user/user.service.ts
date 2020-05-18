@@ -28,7 +28,7 @@ export class UserService implements OnApplicationBootstrap {
         await this.initAdmin()
     }
 
-    async create(username: string, password: string, otherInfo?: Pick<UserEntity, 'age' | 'email' | 'fullname' | 'gender' | 'level' | 'skill'>, isAdmin?: boolean) {
+    async create(username: string, password: string, otherInfo?: Pick<UserEntity, 'age' | 'email' | 'fullname' | 'gender'>, isAdmin?: boolean) {
         const existingUser = await this.userRepo.findOne({username});
         if (existingUser) {
             this.logger.error(`Username ${username} already taken`, Error().stack, 'UserService:create');
@@ -45,15 +45,20 @@ export class UserService implements OnApplicationBootstrap {
         user.email = otherInfo?.email
         user.fullname = otherInfo?.fullname
         user.gender = otherInfo?.gender
-        user.level = otherInfo?.level
-        user.skill = otherInfo?.skill
 
         if (isAdmin) {
             const adminRole = await this.roleRepo.findOne({name: Roles.Admin})
             user.roles = adminRole ? [adminRole] : []
+        } else {
+            const guestRole = await this.roleRepo.findOne({name: Roles.Guest})
+            user.roles = guestRole ? [guestRole] : []
         }
 
-        return this.userRepo.save(user);
+        await this.userRepo.save(user);
+
+        return {
+            success: true
+        }
     }
 
     async getOneById(id: number) {
@@ -76,6 +81,52 @@ export class UserService implements OnApplicationBootstrap {
             .getOne();
     }
 
+    async setRole(userId: number, roleIds: number[]) {
+        const [roles, user] = await Promise.all([
+            this.roleRepo.createQueryBuilder('r')
+                .where('r.id IN (:...roleIds)', {roleIds})
+                .getMany(),
+
+            this.userRepo.findOne({id: userId})
+        ]);
+
+        if (user && roles && roles.length > 0) {
+            user.roles = roles;
+
+            return this.userRepo.save(user);
+        }
+
+        throw new BadRequestException('User or role not found');
+    }
+
+    async getUsers(username: string = '', page: number = 1, limit: number = 10) {
+        return this.userRepo.createQueryBuilder('u')
+            .innerJoinAndSelect('u.roles', 'r')
+            .where('u.username LIKE :username', {username: `${username}%`})
+            .andWhere('u.username != :admin', {admin: this.configService.get('ADMIN_USERNAME')})
+            .skip((page - 1) * limit)
+            .take(limit)
+            .getMany()
+    }
+
+    async getRoles() {
+        return this.roleRepo.find();
+    }
+
+    async updateUser(userId: number, userInfo: Pick<UserEntity, 'status' | 'skill' | 'level'>) {
+        const user = await this.userRepo.findOne({id: userId});
+
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        user.status = userInfo.status;
+        user.skill = userInfo.skill;
+        user.level = userInfo.level;
+
+        return this.userRepo.save(user);
+    }
+
     private async initAdmin() {
         const adminUsername = this.configService.get('ADMIN_USERNAME');
         const adminPassword = this.configService.get('ADMIN_PASSWORD');
@@ -91,7 +142,6 @@ export class UserService implements OnApplicationBootstrap {
         let permissions = await this.permissionRepo.findOne();
         if (!permissions) {
             await Promise.all([Object.values(PermissionScopes).map((value) => {
-                console.log(value)
                 const permission = new PermissionEntity();
                 permission.scope = value;
                 return this.permissionRepo.save(permission);

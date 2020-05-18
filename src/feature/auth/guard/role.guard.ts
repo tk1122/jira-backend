@@ -32,6 +32,7 @@ export class RoleGuard implements CanActivate {
             ?.roles
             .reduce((scopes: string[], role) => ([...scopes, ...role.permissions.map(p => p.scope)]), [])
 
+
         return requiredScopes.every(scope => userScopes?.includes(scope));
     }
 }

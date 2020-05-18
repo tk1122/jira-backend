@@ -1,17 +1,10 @@
-import {ApiModelProperty} from '@nestjs/swagger';
+import {ApiModelProperty, ApiModelPropertyOptional} from '@nestjs/swagger';
+import {PagingQuery} from "../../../shared/interface/paging.query";
+import {IsOptional, IsString} from "class-validator";
 
-export class GetUsersDto {
-    @ApiModelProperty()
-    id: number;
-
-    @ApiModelProperty()
-    email: string;
-}
-
-export class GetUsersAndCountDto {
-    @ApiModelProperty({type: [GetUsersDto]})
-    users: GetUsersDto[];
-
-    @ApiModelProperty()
-    total: number;
+export class GetUserQuery extends PagingQuery {
+    @ApiModelPropertyOptional()
+    @IsString()
+    @IsOptional()
+    username: string
 }
