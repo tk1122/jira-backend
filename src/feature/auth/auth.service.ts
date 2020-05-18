@@ -7,7 +7,8 @@ import {InjectRepository} from "@nestjs/typeorm";
 import {PermissionEntity} from "../user/entity/permission.entity";
 import {Repository} from "typeorm";
 import {RoleEntity} from "../user/entity/role.entity";
-import {UserEntity} from "../user/entity/user.entity";
+import {UserEntity, UserStatus} from "../user/entity/user.entity";
+import {ConfigService} from "../../shared/module/config/config.service";
 
 @Injectable()
 export class AuthService {
@@ -21,7 +22,8 @@ export class AuthService {
         @InjectRepository(PermissionEntity)
         private readonly permissionRepo: Repository<PermissionEntity>,
         @InjectRepository(RoleEntity)
-        private readonly roleRepo: Repository<RoleEntity>
+        private readonly roleRepo: Repository<RoleEntity>,
+        private readonly configService: ConfigService
     ) {
     }
 
@@ -55,12 +57,27 @@ export class AuthService {
             throw new UnauthorizedException('Invalid username or password');
         }
 
+        if (user.status === UserStatus.Unactivated) {
+            // TODO: log
+            throw new UnauthorizedException('Your account need to be accepted by admin');
+        }
+
+        if (user.status === UserStatus.Blocked) {
+            // TODO: log
+            throw new UnauthorizedException('Your account is currently blocked');
+        }
+
         const jwtPayload: JWTPayload = {
+            isAdmin: user.username === this.configService.get('ADMIN_USERNAME'),
             userId: user.id,
             username: user.username,
             roles: user.roles.map(r => r.id)
         }
 
         return this.jwtService.sign(jwtPayload);
+    }
+
+    async register() {
+
     }
 }

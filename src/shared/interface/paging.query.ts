@@ -2,7 +2,7 @@ import {IsInt, Min} from 'class-validator';
 import {Transform} from 'class-transformer';
 import {ApiModelProperty} from '@nestjs/swagger';
 
-export class PagingQueryInterface {
+export class PagingQuery {
     @ApiModelProperty({required: false})
     @IsInt()
     @Min(1)

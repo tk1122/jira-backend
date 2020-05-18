@@ -1,18 +1,18 @@
-import {Body, Controller, Get, Logger, Post} from '@nestjs/common';
+import {Body, Controller, Logger, Post} from '@nestjs/common';
 import {AuthService} from './auth.service';
-import {LoginDto} from './dto/login-dto';
+import {LoginDto} from './dto/login.dto';
 import {Public} from '../../shared/decorator/public.decorator';
 import {ApiOkResponse, ApiUseTags} from '@nestjs/swagger';
 import {AccessTokenDto} from './dto/access-token.dto';
-import {Scopes} from "../../shared/decorator/scopes.decorator";
-import {PermissionScopes} from "../user/entity/permission.entity";
+import {RegisterBody} from "./dto/register.dto";
+import {UserService} from "../user/user.service";
 
 @ApiUseTags('auth')
 @Controller('auth')
 export class AuthController {
     private readonly logger = new Logger(AuthController.name);
 
-    constructor(private readonly authService: AuthService) {
+    constructor(private readonly authService: AuthService, private readonly userService: UserService) {
     }
 
     @Post('login')
@@ -26,9 +26,14 @@ export class AuthController {
         return {accessToken};
     }
 
-    @Get('test')
-    @Scopes(PermissionScopes.ReadSprint, PermissionScopes.ReadEpic)
-    async test() {
-        return {};
+    @Post('register')
+    @Public()
+    async signup(@Body() registerBody: RegisterBody) {
+        return this.userService.create(registerBody.username, registerBody.password, {
+            age: registerBody.age,
+            email: registerBody.email,
+            gender: registerBody.gender,
+            fullname: registerBody.fullname
+        });
     }
 }
