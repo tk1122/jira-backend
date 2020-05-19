@@ -35,8 +35,9 @@ export class AuthService {
             .getOne()
     }
 
-    async createSession(username: string, password: string) {
+    async createSession(username: string, password: string): Promise<JWTPayload & { accessToken: string }> {
         const user = await this.userService.getOneByUsername(username);
+
 
         if (!user) {
             this.logger.error(
@@ -74,7 +75,12 @@ export class AuthService {
             roles: user.roles.map(r => r.id)
         }
 
-        return this.jwtService.sign(jwtPayload);
+        const accessToken = await this.jwtService.sign(jwtPayload);
+
+        return {
+            ...jwtPayload,
+            accessToken
+        }
     }
 
     async register() {

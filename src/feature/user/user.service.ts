@@ -74,7 +74,7 @@ export class UserService implements OnApplicationBootstrap {
     async getOneByUsername(username: string) {
         return await this.userRepo
             .createQueryBuilder('u')
-            .select(['u.id', 'u.password', 'r.name', 'u.username', 'r.id'])
+            .select(['u.id', 'u.password', 'r.name', 'u.username', 'r.id', 'u.status'])
             .addSelect('u.password')
             .where('u.username = :username', {username})
             .innerJoin('u.roles', 'r')
@@ -99,14 +99,19 @@ export class UserService implements OnApplicationBootstrap {
         throw new BadRequestException('User or role not found');
     }
 
-    async getUsers(username: string = '', page: number = 1, limit: number = 10) {
-        return this.userRepo.createQueryBuilder('u')
+    async getUsers(username: string = '', page: number = 1, limit: number = 10, fetchOnlyActiveUsers = true) {
+        const getUsersQuery = this.userRepo.createQueryBuilder('u')
             .innerJoinAndSelect('u.roles', 'r')
             .where('u.username LIKE :username', {username: `${username}%`})
             .andWhere('u.username != :admin', {admin: this.configService.get('ADMIN_USERNAME')})
             .skip((page - 1) * limit)
             .take(limit)
-            .getMany()
+
+        if (fetchOnlyActiveUsers) {
+            getUsersQuery.andWhere('u.status = :activeStatus', {activeStatus: UserStatus.Activated})
+        }
+
+        return getUsersQuery.getMany();
     }
 
     async getRoles() {

@@ -1,6 +1,5 @@
 import {ApiModelProperty} from "@nestjs/swagger";
-import {IsArray, IsNumber} from "class-validator";
-import {Type} from "class-transformer";
+import {IsNumber} from "class-validator";
 
 export class SetRoleBody {
     @ApiModelProperty()

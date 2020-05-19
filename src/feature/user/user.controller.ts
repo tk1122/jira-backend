@@ -6,6 +6,8 @@ import {PermissionScopes} from "./entity/permission.entity";
 import {SetRoleBody} from "./dto/set-role.dto";
 import {GetUserQuery} from "./dto/get-users.dto";
 import {UpdateUserBody} from "./dto/update-user.dto";
+import {User} from "../../shared/decorator/user.decorator";
+import {UserSession} from "../../shared/interface/session.interface";
 
 // @ts-ignore
 
@@ -21,8 +23,8 @@ export class UserController {
 
     @Get('')
     @Scopes(PermissionScopes.ReadUser)
-    async getUsers(@Query() getUsersQuery: GetUserQuery) {
-        return this.userService.getUsers(getUsersQuery.username, getUsersQuery.page, getUsersQuery.limit)
+    async getUsers(@Query() getUsersQuery: GetUserQuery, @User() user: UserSession) {
+        return this.userService.getUsers(getUsersQuery.username, getUsersQuery.page, getUsersQuery.limit, !user.isAdmin)
     }
 
     @Get('roles')

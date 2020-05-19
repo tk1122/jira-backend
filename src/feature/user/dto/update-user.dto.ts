@@ -1,5 +1,5 @@
 import {ApiModelProperty} from "@nestjs/swagger";
-import {IsEnum, IsOptional, IsString} from "class-validator";
+import {IsEnum, IsString} from "class-validator";
 import {UserStatus} from "../entity/user.entity";
 
 export class UpdateUserBody {

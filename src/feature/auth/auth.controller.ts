@@ -19,11 +19,10 @@ export class AuthController {
     @Public()
     @ApiOkResponse({type: AccessTokenDto})
     async login(@Body() loginData: LoginDto) {
-        const accessToken = await this.authService.createSession(
+        return this.authService.createSession(
             loginData.username,
             loginData.password,
         );
-        return {accessToken};
     }
 
     @Post('register')
