@@ -7,6 +7,8 @@ import {UserEntity} from './feature/user/entity/user.entity';
 import {AuthModule} from './feature/auth/auth.module';
 import {RoleEntity} from "./feature/user/entity/role.entity";
 import {PermissionEntity} from "./feature/user/entity/permission.entity";
+import {ProjectEntity} from "./feature/project/entity/project.entity";
+import {ProjectModule} from "./feature/project/project.module";
 
 @Module({
     imports: [
@@ -23,10 +25,12 @@ import {PermissionEntity} from "./feature/user/entity/permission.entity";
                 entities: [
                     UserEntity,
                     RoleEntity,
-                    PermissionEntity
+                    PermissionEntity,
+                    ProjectEntity
                 ],
                 synchronize: true,
                 logging: configService.get('SQL_LOG'),
+                // logging: true,
                 migrations: [`${__dirname}/migration/**/*{.ts,.js}`],
                 cli: {
                     migrationsDir: 'src/migration',
@@ -36,6 +40,7 @@ import {PermissionEntity} from "./feature/user/entity/permission.entity";
         }),
         UserModule,
         AuthModule,
+        ProjectModule
     ],
 })
 export class AppModule {

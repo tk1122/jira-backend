@@ -6,5 +6,6 @@ export interface JWTPayload {
 }
 
 export interface UserSession {
-    userId: number
+    userId: number,
+    isAdmin: boolean
 }
