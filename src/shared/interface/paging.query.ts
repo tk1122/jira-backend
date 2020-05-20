@@ -4,14 +4,14 @@ import {ApiModelProperty} from '@nestjs/swagger';
 
 export class PagingQuery {
     @ApiModelProperty({required: false})
+    @Transform(value => Number(value))
     @IsInt()
     @Min(1)
-    @Transform(value => Number(value))
     page: number = 1;
 
     @ApiModelProperty({required: false})
+    @Transform(value => Number(value))
     @IsInt()
     @Min(1)
-    @Transform(value => Number(value))
     limit: number = 10;
 }
