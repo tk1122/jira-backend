@@ -15,6 +15,7 @@ export class LoggingInterceptor implements NestInterceptor {
         const url = req.originalUrl;
         const body = req.body;
         this.logger.log(`${method} ${url} ${JSON.stringify(body, null, 0)}`);
+        this.logger.log(`Session: ${JSON.stringify(req.user, null, 0)}`);
 
         return next.handle();
     }

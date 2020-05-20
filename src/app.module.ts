@@ -9,6 +9,8 @@ import {RoleEntity} from "./feature/user/entity/role.entity";
 import {PermissionEntity} from "./feature/user/entity/permission.entity";
 import {ProjectEntity} from "./feature/project/entity/project.entity";
 import {ProjectModule} from "./feature/project/project.module";
+import {EpicEntity} from "./feature/epic/entity/epic.entity";
+import {EpicModule} from "./feature/epic/epic.module";
 
 @Module({
     imports: [
@@ -26,7 +28,8 @@ import {ProjectModule} from "./feature/project/project.module";
                     UserEntity,
                     RoleEntity,
                     PermissionEntity,
-                    ProjectEntity
+                    ProjectEntity,
+                    EpicEntity
                 ],
                 synchronize: true,
                 logging: configService.get('SQL_LOG'),
@@ -40,7 +43,8 @@ import {ProjectModule} from "./feature/project/project.module";
         }),
         UserModule,
         AuthModule,
-        ProjectModule
+        ProjectModule,
+        EpicModule
     ],
 })
 export class AppModule {

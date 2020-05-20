@@ -1,6 +1,7 @@
-import {Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne} from "typeorm";
+import {Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany} from "typeorm";
 import {DefaultEntity} from "../../../shared/interface/default.entity";
 import {UserEntity} from "../../user/entity/user.entity";
+import {EpicEntity} from "../../epic/entity/epic.entity";
 
 @Entity({name: 'project'})
 export class ProjectEntity extends DefaultEntity {
@@ -27,6 +28,9 @@ export class ProjectEntity extends DefaultEntity {
     @ManyToMany(() => UserEntity)
     @JoinTable({name: 'project_member'})
     members: UserEntity[]
+
+    @OneToMany(() => EpicEntity, e => e.project)
+    epics: EpicEntity[]
 
     constructor(name: string, description: string, pm: UserEntity, leader: UserEntity) {
         super();
