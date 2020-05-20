@@ -2,6 +2,7 @@ import {Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany}
 import {DefaultEntity} from "../../../shared/interface/default.entity";
 import {UserEntity} from "../../user/entity/user.entity";
 import {EpicEntity} from "../../epic/entity/epic.entity";
+import {SprintEntity} from "../../sprint/entity/sprint.entity";
 
 @Entity({name: 'project'})
 export class ProjectEntity extends DefaultEntity {
@@ -31,6 +32,9 @@ export class ProjectEntity extends DefaultEntity {
 
     @OneToMany(() => EpicEntity, e => e.project)
     epics: EpicEntity[]
+
+    @OneToMany(() => SprintEntity, s => s.project)
+    sprints: SprintEntity[]
 
     constructor(name: string, description: string, pm: UserEntity, leader: UserEntity) {
         super();

@@ -11,6 +11,8 @@ import {ProjectEntity} from "./feature/project/entity/project.entity";
 import {ProjectModule} from "./feature/project/project.module";
 import {EpicEntity} from "./feature/epic/entity/epic.entity";
 import {EpicModule} from "./feature/epic/epic.module";
+import {SprintModule} from "./feature/sprint/sprint.module";
+import {SprintEntity} from "./feature/sprint/entity/sprint.entity";
 
 @Module({
     imports: [
@@ -29,7 +31,8 @@ import {EpicModule} from "./feature/epic/epic.module";
                     RoleEntity,
                     PermissionEntity,
                     ProjectEntity,
-                    EpicEntity
+                    EpicEntity,
+                    SprintEntity
                 ],
                 synchronize: true,
                 logging: configService.get('SQL_LOG'),
@@ -44,7 +47,8 @@ import {EpicModule} from "./feature/epic/epic.module";
         UserModule,
         AuthModule,
         ProjectModule,
-        EpicModule
+        EpicModule,
+        SprintModule
     ],
 })
 export class AppModule {

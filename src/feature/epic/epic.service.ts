@@ -87,19 +87,13 @@ export class EpicService {
             throw  new NotFoundException('Epic not found');
         }
 
-        console.log(epic)
-
-        const project = await this.getProject(epic?.project?.id)
+        const project = await this.getProjectById(epic?.project?.id)
 
         if (!project) {
             throw new NotFoundException('Epic not belong to any project')
         }
 
-        console.log(project)
-
-        if (project?.pm?.id !== userId &&
-            project?.leader?.id !== userId &&
-            !project?.members.map(m => m?.id).includes(userId)
+        if (!this.isMemberOfProject(userId, project)
         ) {
             throw new UnauthorizedException('You cannot get this epic')
         }
@@ -108,17 +102,13 @@ export class EpicService {
     }
 
     async getManyEpic(projectId: number, userId: number) {
-        const project = await this.getProject(projectId)
+        const project = await this.getProjectById(projectId)
 
         if (!project) {
             throw new NotFoundException('Project not found')
         }
 
-        console.log(project)
-
-        if (project?.pm?.id !== userId &&
-            project?.leader?.id !== userId &&
-            !project?.members.map(m => m?.id).includes(userId)
+        if (!this.isMemberOfProject(userId, project)
         ) {
             throw new UnauthorizedException('You cannot get epics of this project')
         }
@@ -126,7 +116,7 @@ export class EpicService {
         return this.epicRepo.find({where: {project}})
     }
 
-    private async getProject(projectId: number) {
+    async getProjectById(projectId: number) {
         return this.projectRepo.createQueryBuilder('p')
             .select(['p.id', 'pm.id', 'l.id', 'm.id'])
             .leftJoin('p.pm', 'pm')
@@ -134,5 +124,11 @@ export class EpicService {
             .leftJoin('p.members', 'm')
             .where('p.id = :projectId', {projectId})
             .getOne()
+    }
+
+    isMemberOfProject(userId: number, project: ProjectEntity) {
+        return !(project?.pm?.id !== userId &&
+            project?.leader?.id !== userId &&
+            !project?.members.map(m => m?.id).includes(userId));
     }
 }
