@@ -1,16 +1,16 @@
-import {IsNumber, IsString} from "class-validator";
-import {ApiModelProperty} from "@nestjs/swagger";
+import { IsNumber, IsString } from 'class-validator';
+import { ApiModelProperty } from '@nestjs/swagger';
 
 export class CreateProjectBody {
-    @ApiModelProperty()
-    @IsString()
-    name: string
+  @ApiModelProperty()
+  @IsString()
+  name: string;
 
-    @ApiModelProperty()
-    @IsString()
-    description: string
+  @ApiModelProperty()
+  @IsString()
+  description: string;
 
-    @ApiModelProperty()
-    @IsNumber()
-    leaderId: number
+  @ApiModelProperty()
+  @IsNumber()
+  leaderId: number;
 }
