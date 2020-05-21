@@ -1,16 +1,16 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiModelProperty, ApiResponseModelProperty } from '@nestjs/swagger';
 import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 export abstract class DefaultEntity {
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @CreateDateColumn({ select: false, name: 'created_at' })
   createdAt: Date;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @UpdateDateColumn({ select: false, name: 'updated_at' })
   updatedAt: Date;
 }

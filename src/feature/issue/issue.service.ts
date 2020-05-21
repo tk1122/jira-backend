@@ -42,7 +42,7 @@ export class IssueService {
 
     console.log(epics);
 
-    const project = await this.projectRepo.findOne({ epics }, {relations: ['leader'] });
+    const project = await this.projectRepo.findOne({ epics }, { relations: ['leader'] });
 
     if (!project) {
       throw new NotFoundException('Epic not belong to any project');
@@ -55,4 +55,3 @@ export class IssueService {
     }
   }
 }
-

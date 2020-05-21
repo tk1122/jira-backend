@@ -16,6 +16,7 @@ import { SprintEntity } from './feature/sprint/entity/sprint.entity';
 import { IssueEntity } from './feature/issue/entity/issue.entity';
 import { LabelEntity } from './feature/issue/entity/label.entity';
 import { IssueModule } from './feature/issue/issue.module';
+import { CommonRepoModule } from './shared/module/common-repo/common-repo.module';
 
 @Module({
   imports: [
@@ -31,9 +32,7 @@ import { IssueModule } from './feature/issue/issue.module';
         database: configService.get('DB_NAME'),
         entities: [UserEntity, RoleEntity, PermissionEntity, ProjectEntity, EpicEntity, SprintEntity, IssueEntity, LabelEntity],
         synchronize: true,
-        // logging: configService.get('SQL_LOG'),
-        logging: true,
-        // logging: true,
+        logging: !!+configService.get('SQL_LOG'),
         migrations: [`${__dirname}/migration/**/*{.ts,.js}`],
         cli: {
           migrationsDir: 'src/migration',
@@ -47,6 +46,7 @@ import { IssueModule } from './feature/issue/issue.module';
     SprintModule,
     EpicModule,
     IssueModule,
+    CommonRepoModule,
   ],
 })
 export class AppModule {}

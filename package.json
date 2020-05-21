@@ -1,7 +1,7 @@
 {
-  "name": "base-project-nestjs",
+  "name": "jira",
   "version": "1.0.0",
-  "description": "Nest base project",
+  "description": "JIRA - Project management tool",
   "author": "",
   "license": "MIT",
   "scripts": {

@@ -4,6 +4,7 @@ import { SprintEntity, SprintStatus } from './entity/sprint.entity';
 import { Repository } from 'typeorm';
 import { ProjectEntity } from '../project/entity/project.entity';
 import { EpicService } from '../epic/epic.service';
+import { CommonRepoService } from '../../shared/module/common-repo/common-repo.service';
 
 @Injectable()
 export class SprintService {
@@ -11,31 +12,37 @@ export class SprintService {
     @InjectRepository(SprintEntity) private readonly sprintRepo: Repository<SprintEntity>,
     @InjectRepository(ProjectEntity) private readonly projectRepo: Repository<ProjectEntity>,
     private readonly epicService: EpicService,
+    private readonly commonRepo: CommonRepoService,
   ) {}
 
+  private isLeaderOfProject(userId: number, project: ProjectEntity) {
+    return project.leaderId === userId;
+  }
+
+  private async canUserEditSprint(userId: number, sprint: SprintEntity) {
+    const project = await this.commonRepo.getProjectByIdOrFail(sprint.projectId);
+
+    return this.isLeaderOfProject(userId, project);
+  }
+
   async createSprint(projectId: number, userId: number, name: string, description: string) {
-    const project = await this.projectRepo
-      .createQueryBuilder('p')
-      .select(['p.id', 'l.id'])
-      .leftJoin('p.leader', 'l')
-      .where('p.id = :projectId', { projectId })
-      .getOne();
+    const project = await this.commonRepo.getProjectByIdOrFail(projectId);
 
-    if (!project) {
-      throw new NotFoundException('Project not found');
-    }
-
-    if (project?.leader?.id !== userId) {
+    if (!this.isLeaderOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot create sprint for this project');
     }
 
-    const sprint = new SprintEntity(name, description, project);
+    const sprint = new SprintEntity(name, description, projectId);
 
     return this.sprintRepo.save(sprint);
   }
 
   async updateSprint(sprintId: number, userId: number, name?: string, description?: string) {
-    const sprint = await this.canUserEditSprint(sprintId, userId);
+    const sprint = await this.commonRepo.getSprintByIdOrFail(sprintId);
+
+    if (!(await this.canUserEditSprint(userId, sprint))) {
+      throw new BadRequestException('You cannot update this sprint');
+    }
 
     if (name !== undefined) {
       sprint.name = name;
@@ -49,18 +56,17 @@ export class SprintService {
   }
 
   async startSprint(sprintId: number, userId: number) {
-    const sprint = await this.canUserEditSprint(sprintId, userId);
+    const sprint = await this.commonRepo.getSprintByIdOrFail(sprintId);
 
-    if (sprint.status !== SprintStatus.Pending) {
-      throw new BadRequestException('Cannot start this sprint');
+    if (!(await this.canUserEditSprint(userId, sprint))) {
+      throw new BadRequestException('You cannot start this sprint');
     }
 
-    const otherSprintsOfProjects = await this.sprintRepo
-      .createQueryBuilder('s')
-      .select(['s.status'])
-      .innerJoin('s.project', 'p')
-      .where('p.id = :projectId', { projectId: sprint?.project?.id })
-      .getMany();
+    if (sprint.status !== SprintStatus.Pending) {
+      throw new BadRequestException('This sprint is not currently waiting to start');
+    }
+
+    const otherSprintsOfProjects = await this.sprintRepo.find({ projectId: sprint.projectId });
 
     if (otherSprintsOfProjects.map(s => s.status).includes(SprintStatus.InProgress)) {
       throw new BadRequestException('Each project has only one active sprint');
@@ -73,10 +79,14 @@ export class SprintService {
   }
 
   async finishSprint(sprintId: number, userId: number) {
-    const sprint = await this.canUserEditSprint(sprintId, userId);
+    const sprint = await this.sprintRepo.findOneOrFail({ id: sprintId });
 
-    if (sprint.status !== SprintStatus.InProgress) {
-      throw new BadRequestException('Cannot finish this sprint');
+    if (!(await this.canUserEditSprint(userId, sprint))) {
+      throw new BadRequestException('You cannot finish this sprint');
+    }
+
+    if (sprint.status !== SprintStatus.Pending) {
+      throw new BadRequestException('This sprint is not currently active');
     }
 
     sprint.finishTime = new Date();
@@ -86,22 +96,11 @@ export class SprintService {
   }
 
   async getOneSprint(sprintId: number, userId: number) {
-    const sprint = await this.getSprintById(sprintId);
+    const sprint = await this.commonRepo.getSprintByIdOrFail(sprintId);
 
-    const project = await this.projectRepo
-      .createQueryBuilder('p')
-      .select(['p.id', 'l.id', 'pm.id', 'm.id'])
-      .leftJoin('p.leader', 'l')
-      .leftJoin('p.pm', 'pm')
-      .leftJoin('p.members', 'm')
-      .where('p.id = :projectId', { projectId: sprint?.project?.id })
-      .getOne();
+    const project = await this.commonRepo.getProjectByIdOrFail(sprint.projectId);
 
-    if (!project) {
-      throw new NotFoundException('Sprint not belong to any project');
-    }
-
-    if (project?.leader?.id !== userId && project?.pm?.id !== userId && !project?.members.map(m => m?.id).includes(userId)) {
+    if (!this.epicService.isMemberOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot read this sprint');
     }
 
@@ -109,52 +108,12 @@ export class SprintService {
   }
 
   async getManySprints(projectId: number, userId: number) {
-    const project = await this.epicService.getProjectById(projectId);
-
-    if (!project) {
-      throw new NotFoundException('Project not found');
-    }
+    const project = await this.commonRepo.getProjectByIdOrFail(projectId);
 
     if (!this.epicService.isMemberOfProject(userId, project)) {
       throw new UnauthorizedException('You are not a member of this project');
     }
 
     return this.sprintRepo.find({ project });
-  }
-
-  private async getSprintById(sprintId: number) {
-    const sprint = await this.sprintRepo
-      .createQueryBuilder('s')
-      .select(['s', 'p.id'])
-      .leftJoin('s.project', 'p')
-      .where('s.id = :sprintId', { sprintId })
-      .getOne();
-
-    if (!sprint) {
-      throw new NotFoundException('Sprint not found');
-    }
-
-    return sprint;
-  }
-
-  private async canUserEditSprint(sprintId: number, userId: number) {
-    const sprint = await this.getSprintById(sprintId);
-
-    const project = await this.projectRepo
-      .createQueryBuilder('p')
-      .select(['p.id', 'l.id'])
-      .leftJoin('p.leader', 'l')
-      .where('p.id = :projectId', { projectId: sprint?.project?.id })
-      .getOne();
-
-    if (!project) {
-      throw new NotFoundException('Sprint not belong to any project');
-    }
-
-    if (project?.leader?.id !== userId) {
-      throw new UnauthorizedException('You cannot update this sprint');
-    }
-
-    return sprint;
   }
 }

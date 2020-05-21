@@ -3,59 +3,42 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EpicEntity } from './entity/epic.entity';
 import { Repository } from 'typeorm';
 import { ProjectEntity } from '../project/entity/project.entity';
+import { CommonRepoService } from '../../shared/module/common-repo/common-repo.service';
 
 @Injectable()
 export class EpicService {
   constructor(
     @InjectRepository(EpicEntity) private readonly epicRepo: Repository<EpicEntity>,
     @InjectRepository(ProjectEntity) private readonly projectRepo: Repository<ProjectEntity>,
+    private readonly commonRepo: CommonRepoService,
   ) {}
 
+  isMemberOfProject(userId: number, project: ProjectEntity) {
+    return !(project.pmId !== userId && project.leaderId !== userId && !project.memberIds.includes(userId));
+  }
+
+  private isPMOfProject(userId: number, project: ProjectEntity) {
+    return project.pmId === userId;
+  }
+
   async createEpic(projectId: number, userId: number, name: string, description: string, startDate: Date, endDate: Date) {
-    const project = await this.projectRepo
-      .createQueryBuilder('p')
-      .select(['p.id', 'pm.id'])
-      .leftJoin('p.pm', 'pm')
-      .where('p.id = :projectId', { projectId })
-      .getOne();
+    const project = await this.commonRepo.getProjectByIdOrFail(projectId);
 
-    if (!project) {
-      throw new NotFoundException('Project not found');
-    }
-
-    if (project?.pm?.id !== userId) {
+    if (!this.isPMOfProject(userId, project)) {
       throw new UnauthorizedException('You cannnot create epic for this project');
     }
 
-    const epic = new EpicEntity(name, description, startDate, endDate, project);
+    const epic = new EpicEntity(name, description, startDate, endDate, projectId);
 
     return this.epicRepo.save(epic);
   }
 
   async updateEpic(epicId: number, userId: number, name?: string, description?: string, startDate?: Date, endDate?: Date) {
-    const epic = await this.epicRepo
-      .createQueryBuilder('e')
-      .select(['e.id', 'p.id'])
-      .leftJoin('e.project', 'p')
-      .where('e.id = :epicId', { epicId })
-      .getOne();
+    const epic = await this.commonRepo.getEpicByIdOrFail(epicId);
 
-    if (!epic) {
-      throw new NotFoundException('Epic not found');
-    }
+    const project = await this.commonRepo.getProjectByIdOrFail(epic.projectId);
 
-    const project = await this.projectRepo
-      .createQueryBuilder('p')
-      .select(['p.id', 'pm.id'])
-      .innerJoin('p.pm', 'pm')
-      .where('p.id = :projectId', { projectId: epic?.project?.id })
-      .getOne();
-
-    if (!project) {
-      throw new NotFoundException('Epic not belong to any project');
-    }
-
-    if (project?.pm?.id !== userId) {
+    if (!this.isPMOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot update this epic');
     }
 
@@ -79,22 +62,9 @@ export class EpicService {
   }
 
   async getOneEpic(epicId: number, userId: number) {
-    const epic = await this.epicRepo
-      .createQueryBuilder('e')
-      .select(['e', 'p.id'])
-      .leftJoin('e.project', 'p')
-      .where('e.id = :epicId', { epicId })
-      .getOne();
+    const epic = await this.commonRepo.getEpicByIdOrFail(epicId);
 
-    if (!epic) {
-      throw new NotFoundException('Epic not found');
-    }
-
-    const project = await this.getProjectById(epic?.project?.id);
-
-    if (!project) {
-      throw new NotFoundException('Epic not belong to any project');
-    }
+    const project = await this.commonRepo.getProjectByIdOrFail(epic.projectId);
 
     if (!this.isMemberOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot get this epic');
@@ -104,31 +74,12 @@ export class EpicService {
   }
 
   async getManyEpic(projectId: number, userId: number) {
-    const project = await this.getProjectById(projectId);
-
-    if (!project) {
-      throw new NotFoundException('Project not found');
-    }
+    const project = await this.commonRepo.getProjectByIdOrFail(projectId);
 
     if (!this.isMemberOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot get epics of this project');
     }
 
-    return this.epicRepo.find({ where: { project } });
-  }
-
-  async getProjectById(projectId: number) {
-    return this.projectRepo
-      .createQueryBuilder('p')
-      .select(['p.id', 'pm.id', 'l.id', 'm.id'])
-      .leftJoin('p.pm', 'pm')
-      .leftJoin('p.leader', 'l')
-      .leftJoin('p.members', 'm')
-      .where('p.id = :projectId', { projectId })
-      .getOne();
-  }
-
-  isMemberOfProject(userId: number, project: ProjectEntity) {
-    return !(project?.pm?.id !== userId && project?.leader?.id !== userId && !project?.members.map(m => m?.id).includes(userId));
+    return this.epicRepo.find({ project });
   }
 }

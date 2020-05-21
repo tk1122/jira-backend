@@ -1,27 +1,35 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
+import { ApiResponseModelProperty } from '@nestjs/swagger';
 
 @Entity('sprint')
 export class SprintEntity extends DefaultEntity {
+  @ApiResponseModelProperty()
   @Column()
   name: string;
 
+  @ApiResponseModelProperty()
   @Column()
   description: string;
 
+  @ApiResponseModelProperty()
   @Column({ type: 'timestamp', name: 'start_time', nullable: true })
   startTime: Date;
 
+  @ApiResponseModelProperty()
   @Column({ type: 'timestamp', name: 'finish_time', nullable: true })
   finishTime: Date;
 
+  @ApiResponseModelProperty()
   @Column({ name: 'total_story_point' })
   totalStoryPoint: number;
 
+  @ApiResponseModelProperty()
   @Column({ type: 'tinyint' })
   status: SprintStatus;
 
+  @ApiResponseModelProperty()
   @Column({ type: 'tinyint', name: 'entity_type' })
   entityType: SprintEntityType;
 
@@ -32,15 +40,16 @@ export class SprintEntity extends DefaultEntity {
   @JoinColumn({ name: 'project_id' })
   project: ProjectEntity;
 
-  @Column({name: 'project_id'})
-  projectId: number
+  @ApiResponseModelProperty()
+  @Column({ name: 'project_id' })
+  projectId: number;
 
-  constructor(name: string, description: string, project: ProjectEntity) {
+  constructor(name: string, description: string, projectId: number) {
     super();
 
     this.name = name;
     this.description = description;
-    this.project = project;
+    this.projectId = projectId;
     this.status = SprintStatus.Pending;
     this.totalStoryPoint = 0;
     this.entityType = 2;
