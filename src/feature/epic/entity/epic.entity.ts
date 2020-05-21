@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
 import { IssueEntity } from '../../issue/entity/issue.entity';
@@ -24,7 +24,11 @@ export class EpicEntity extends DefaultEntity {
     () => ProjectEntity,
     p => p.epics,
   )
+  @JoinColumn({name: 'project_id'})
   project: ProjectEntity;
+
+  @Column({name: 'project_id'})
+  projectId: number
 
   @OneToMany(
     () => IssueEntity,

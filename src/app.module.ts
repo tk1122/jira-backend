@@ -31,7 +31,8 @@ import { IssueModule } from './feature/issue/issue.module';
         database: configService.get('DB_NAME'),
         entities: [UserEntity, RoleEntity, PermissionEntity, ProjectEntity, EpicEntity, SprintEntity, IssueEntity, LabelEntity],
         synchronize: true,
-        logging: configService.get('SQL_LOG'),
+        // logging: configService.get('SQL_LOG'),
+        logging: true,
         // logging: true,
         migrations: [`${__dirname}/migration/**/*{.ts,.js}`],
         cli: {

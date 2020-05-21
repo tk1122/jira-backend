@@ -6,9 +6,10 @@ import { IssueEntity } from './entity/issue.entity';
 import { LabelEntity } from './entity/label.entity';
 import { EpicEntity } from '../epic/entity/epic.entity';
 import { SprintEntity } from '../sprint/entity/sprint.entity';
+import { ProjectEntity } from '../project/entity/project.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([IssueEntity, LabelEntity, EpicEntity, SprintEntity])],
+  imports: [TypeOrmModule.forFeature([IssueEntity, LabelEntity, EpicEntity, SprintEntity, ProjectEntity])],
   controllers: [IssueController],
   providers: [IssueService],
 })

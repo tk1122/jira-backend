@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
 
@@ -29,7 +29,11 @@ export class SprintEntity extends DefaultEntity {
     () => ProjectEntity,
     p => p.sprints,
   )
+  @JoinColumn({ name: 'project_id' })
   project: ProjectEntity;
+
+  @Column({name: 'project_id'})
+  projectId: number
 
   constructor(name: string, description: string, project: ProjectEntity) {
     super();

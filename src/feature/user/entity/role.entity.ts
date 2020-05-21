@@ -11,7 +11,7 @@ export class RoleEntity extends DefaultEntity {
 
   @ApiModelProperty()
   @ManyToMany(() => PermissionEntity, { nullable: true })
-  @JoinTable({ name: 'role_permission' })
+  @JoinTable({ name: 'role_permission', joinColumn: { name: 'role_id' }, inverseJoinColumn: { name: 'permission_id' } })
   permissions: PermissionEntity[];
 }
 

@@ -1,4 +1,4 @@
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, RelationId } from 'typeorm';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { UserEntity } from '../../user/entity/user.entity';
 import { EpicEntity } from '../../epic/entity/epic.entity';
@@ -34,7 +34,7 @@ export class IssueEntity extends DefaultEntity {
   @Column({ name: 'entity_type', type: 'tinyint' })
   entityType: IssueEntityType;
 
-  @Column()
+  @Column({ name: 'story_point' })
   storyPoint: number;
 
   @Column({ type: 'tinyint' })
@@ -50,22 +50,38 @@ export class IssueEntity extends DefaultEntity {
     () => UserEntity,
     u => u.assignedIssues,
   )
+  @JoinColumn({ name: 'assignee_id' })
   assignee: UserEntity;
+
+  @Column({ name: 'assignee_id' })
+  assigneeId: number;
 
   @ManyToOne(
     () => UserEntity,
     u => u.reportedIssues,
   )
+  @JoinColumn({ name: 'reporter_id' })
   reporter: UserEntity;
+
+  @Column({ name: 'reporter_id' })
+  reporterId: number;
 
   @ManyToOne(
     () => EpicEntity,
     e => e.issues,
   )
+  @JoinColumn({ name: 'epic_id' })
   epic: EpicEntity;
 
-  @ManyToMany(() => IssueEntity)
-  @JoinTable({ name: 'issue_label' })
+  @Column({ name: 'epic_id' })
+  epicId: number;
+
+  @ManyToMany(() => LabelEntity)
+  @JoinTable({
+    name: 'issue_label',
+    joinColumn: { name: 'issue_id' },
+    inverseJoinColumn: { name: 'label_id' },
+  })
   labels: LabelEntity[];
 
   constructor(
@@ -90,7 +106,9 @@ export class IssueEntity extends DefaultEntity {
     this.storyPoint = storyPoint ?? 0;
     this.priority = priority ?? IssuePriority.Medium;
     this.type = type ?? IssueType.Task;
-    this.labels = labels ?? [];
+    if (labels !== undefined) {
+      this.labels = labels;
+    }
 
     this.status = IssueStatus.Todo;
     this.entityType = 3;

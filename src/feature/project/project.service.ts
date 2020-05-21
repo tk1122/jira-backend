@@ -53,9 +53,9 @@ export class ProjectService {
   async getProjects(userId: number, name = '', status?: ProjectStatus, page = 1, limit = 10) {
     const getProjectsQuery = this.projectRepo
       .createQueryBuilder('p')
-      .select(['p', 'm.id', 'l.id', 'pm.id'])
+      .select(['p', 'l.id', 'pm.id'])
       .where('p.name LIKE :name', { name: `${name}%` })
-      .innerJoin('p.members', 'm')
+      // .innerJoin('p.members', 'm')
       .innerJoin('p.leader', 'l')
       .innerJoin('p.pm', 'pm');
 

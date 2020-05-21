@@ -1,6 +1,7 @@
 import { DefaultEntity } from '../../../shared/interface/default.entity';
-import { Column } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 
+@Entity('label')
 export class LabelEntity extends DefaultEntity {
   @Column({ unique: true })
   name: string;

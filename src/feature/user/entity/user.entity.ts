@@ -49,7 +49,7 @@ export class UserEntity extends DefaultEntity {
 
   @ApiModelProperty()
   @ManyToMany(() => RoleEntity)
-  @JoinTable({ name: 'user_role' })
+  @JoinTable({ name: 'user_role', joinColumn: { name: 'user_id' }, inverseJoinColumn: { name: 'role_id' } })
   roles: RoleEntity[];
 
   @OneToMany(
