@@ -8,7 +8,8 @@ import {ProjectEntity} from "../project/entity/project.entity";
 @Module({
     imports: [TypeOrmModule.forFeature([EpicEntity, ProjectEntity])],
     controllers: [EpicController],
-    providers: [EpicService]
+    providers: [EpicService],
+    exports: [EpicService]
 })
 export class EpicModule {
     
