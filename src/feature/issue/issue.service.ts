@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IssueEntity, IssuePriority, IssueType } from './entity/issue.entity';
 import { In, Repository } from 'typeorm';
@@ -21,6 +21,14 @@ export class IssueService {
     private readonly userService: UserService,
   ) {}
 
+  async getIssueByIdOrFail(issueId: number) {
+    try {
+      return await this.issueRepo.findOneOrFail({ id: issueId });
+    } catch (e) {
+      throw new NotFoundException('Issue not found');
+    }
+  }
+
   async createIssue(
     userId: number,
     name: string,
@@ -36,8 +44,6 @@ export class IssueService {
     type?: IssueType,
   ) {
     const project = await this.projectService.getProjectByIdOrFail(projectId);
-
-    console.log(project);
 
     if (!this.projectService.isLeaderOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot create this issue');
@@ -67,24 +73,62 @@ export class IssueService {
       throw new BadRequestException('Sprint is not belong to project');
     }
 
-    console.log(labels);
+    if (labels && labels.some(l => l.projectId !== project.id)) {
+      throw new UnauthorizedException('Cannot add label to this issue');
+    }
 
-    const issue = new IssueEntity(
-      name,
-      description,
-      assignee.id,
-      reporter.id,
-      project.id,
-      epic?.id,
-      sprint?.id,
-      labels?.map(l => l.id),
-      storyPoint,
-      priority,
-      type,
+    const issue = await this.issueRepo.save(
+      new IssueEntity(name, description, assignee, reporter, project, epic, sprint, labels, storyPoint, priority, type),
     );
 
-    return this.issueRepo.save(issue);
+    return this.issueRepo.findOne({ id: issue.id });
   }
 
-  as
+  async createLabel(name: string, projectId: number, userId: number) {
+    const project = await this.projectService.getProjectByIdOrFail(projectId);
+
+    if (!this.projectService.isMemberOfProject(userId, project)) {
+      throw new UnauthorizedException('You cannot create label for this project');
+    }
+
+    const label = await this.labelRepo.findOne({ name, project });
+
+    if (label) {
+      throw new BadRequestException('Label already exists on this project');
+    }
+
+    return this.labelRepo.save(new LabelEntity(name, project.id));
+  }
+
+  async getManyLabel(projectId: number, userId: number) {
+    const project = await this.projectService.getProjectByIdOrFail(projectId);
+
+    if (!this.projectService.isMemberOfProject(userId, project)) {
+      throw new UnauthorizedException('You cannot get label of this project');
+    }
+
+    return this.labelRepo.find({ project });
+  }
+
+  async getManyIssues(projectId: number, userId: number) {
+    const project = await this.projectService.getProjectByIdOrFail(projectId);
+
+    if (!this.projectService.isMemberOfProject(userId, project)) {
+      throw new UnauthorizedException('You cannot get issues of this project');
+    }
+
+    return this.issueRepo.find({ project });
+  }
+
+  async getOneIssue(issueId: number, userId: number) {
+    const issue = await this.getIssueByIdOrFail(issueId);
+
+    const project = await this.projectService.getProjectByIdOrFail(issue.projectId);
+
+    if (!this.projectService.isMemberOfProject(userId, project)) {
+      throw new UnauthorizedException('You cannot get issues of this project');
+    }
+
+    return issue;
+  }
 }

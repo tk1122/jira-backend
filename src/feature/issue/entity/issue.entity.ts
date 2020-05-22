@@ -128,12 +128,12 @@ export class IssueEntity extends DefaultEntity {
   constructor(
     name: string,
     description: string,
-    assigneeId: number,
-    reporterId: number,
-    projectId: number,
-    epicId?: number,
-    sprintId?: number,
-    labelIds?: number[],
+    assignee: UserEntity,
+    reporter: UserEntity,
+    project: ProjectEntity,
+    epic?: EpicEntity,
+    sprint?: SprintEntity,
+    labels?: LabelEntity[],
     storyPoint?: number,
     priority?: IssuePriority,
     type?: IssueType,
@@ -142,14 +142,14 @@ export class IssueEntity extends DefaultEntity {
 
     this.name = name;
     this.description = description;
-    this.assigneeId = assigneeId;
-    this.reporterId = reporterId;
-    this.projectId = projectId;
+    this.assignee = assignee;
+    this.reporter = reporter;
+    this.project = project;
 
-    this.epicId = epicId;
-    this.sprintId = sprintId;
-    if (labelIds) {
-      this.labelIds = labelIds;
+    this.epic = epic;
+    this.sprint = sprint;
+    if (labels) {
+      this.labels = labels;
     }
 
     this.storyPoint = storyPoint ?? 0;
