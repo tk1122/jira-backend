@@ -1,72 +1,109 @@
-import {BadRequestException, Injectable, NotFoundException} from "@nestjs/common";
-import {InjectRepository} from "@nestjs/typeorm";
-import {ProjectEntity, ProjectStatus} from "./entity/project.entity";
-import {Brackets, Repository} from "typeorm";
-import {UserEntity} from "../user/entity/user.entity";
-import {RoleEntity, Roles} from "../user/entity/role.entity";
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ProjectEntity, ProjectStatus } from './entity/project.entity';
+import { Brackets, Repository } from 'typeorm';
+import { UserEntity } from '../user/entity/user.entity';
+import { RoleEntity, Roles } from '../user/entity/role.entity';
 
 @Injectable()
 export class ProjectService {
-    constructor(@InjectRepository(ProjectEntity) private readonly projectRepo: Repository<ProjectEntity>,
-                @InjectRepository(UserEntity) private readonly userRepo: Repository<UserEntity>,
-                @InjectRepository(RoleEntity) private readonly roleRepo: Repository<RoleEntity>) {
+  constructor(
+    @InjectRepository(ProjectEntity) private readonly projectRepo: Repository<ProjectEntity>,
+    @InjectRepository(UserEntity) private readonly userRepo: Repository<UserEntity>,
+    @InjectRepository(RoleEntity) private readonly roleRepo: Repository<RoleEntity>,
+  ) {}
+
+  async getProjectByIdOrFail(projectId: number) {
+    try {
+      return await this.projectRepo.findOneOrFail({ id: projectId });
+    } catch (e) {
+      throw new NotFoundException('Project not found');
+    }
+  }
+
+  isLeaderOfProject(userId: number, project: ProjectEntity) {
+    return project.leaderId === userId;
+  }
+
+  isPMOfProject(userId: number, project: ProjectEntity) {
+    return project.pmId === userId;
+  }
+
+  isMemberOfProject(userId: number, project: ProjectEntity) {
+    return !(project.pmId !== userId && project.leaderId !== userId && !project.memberIds.includes(userId));
+  }
+
+  async createProject(name: string, description: string, pmId: number, leaderId: number) {
+    const leader = await this.userRepo
+      .createQueryBuilder('u')
+      .select(['u.id'])
+      .innerJoin('u.roles', 'r')
+      .where('u.id = :leaderId', { leaderId })
+      .where('r.name = :leaderRole', { leaderRole: Roles.Leader })
+      .getOne();
+
+    if (!leader) {
+      throw new BadRequestException('Leader not found');
     }
 
-    async createProject(name: string, description: string, pmId: number, leaderId: number) {
-        const leader = await this.userRepo.createQueryBuilder('u')
-            .select(['u.id'])
-            .innerJoin('u.roles', 'r')
-            .where('u.id = :leaderId', {leaderId})
-            .where('r.name = :leaderRole', {leaderRole: Roles.Leader})
-            .getOne()
+    return this.projectRepo.save(new ProjectEntity(name, description, { id: pmId } as UserEntity, leader));
+  }
 
-        if (!leader) {
-            throw new BadRequestException('Leader not found');
-        }
+  async updateProject(projectId: number, memberIds: number[], name: string, description: string, status: ProjectStatus) {
+    const project = await this.projectRepo.findOne({ id: projectId });
 
-        return this.projectRepo.save(new ProjectEntity(name, description, {id: pmId} as UserEntity, leader));
+    if (!project) {
+      throw new NotFoundException('Project not found');
     }
 
-    async updateProject(projectId: number, memberIds: number[], name: string, description: string, status: ProjectStatus) {
-        const project = await this.projectRepo.findOne({id: projectId});
+    const members = await this.userRepo
+      .createQueryBuilder('u')
+      .select(['u.id'])
+      .where('u.id IN (:...memberIds)', { memberIds })
+      .getMany();
 
-        if (!project) {
-            throw new NotFoundException('Project not found');
-        }
+    project.name = name;
+    project.description = description;
+    project.status = status;
+    project.members = members;
 
-        const members = await this.userRepo.createQueryBuilder('u')
-            .select(['u.id'])
-            .where('u.id IN (:...memberIds)', {memberIds})
-            .getMany()
+    return this.projectRepo.save(project);
+  }
 
-        project.name = name;
-        project.description = description;
-        project.status = status;
-        project.members = members;
+  async getProjects(userId: number, name = '', status?: ProjectStatus, page = 1, limit = 10) {
+    const getProjectsQuery = this.projectRepo
+      .createQueryBuilder('p')
+      .select(['p'])
+      .where('p.name LIKE :name', { name: `${name}%` })
+      .innerJoin('p.members', 'm')
+      .innerJoin('p.leader', 'l')
+      .innerJoin('p.pm', 'pm');
 
-        return this.projectRepo.save(project);
+    if (status !== undefined) {
+      getProjectsQuery.andWhere('p.status = :status', { status });
     }
 
-    async getProjects(userId: number, name = '', status?: ProjectStatus, page = 1, limit = 10) {
-        const getProjectsQuery = this.projectRepo.createQueryBuilder('p')
-            .select(['p', 'm.id', 'l.id', 'pm.id'])
-            .where('p.name LIKE :name', {name: `${name}%`})
-            .innerJoin('p.members', 'm')
-            .innerJoin('p.leader', 'l')
-            .innerJoin('p.pm', 'pm')
+    getProjectsQuery.andWhere(
+      new Brackets(qb => {
+        return qb
+          .andWhere('l.id = :userId', { userId })
+          .orWhere('pm.id = :userId', { userId })
+          .orWhere('m.id = :userId', { userId });
+      }),
+    );
 
-        if (status !== undefined) {
-            getProjectsQuery.andWhere('p.status = :status', {status})
-        }
+    getProjectsQuery.skip((page - 1) * limit).take(limit);
 
-        getProjectsQuery.andWhere(new Brackets(qb => {
-            return qb.andWhere('l.id = :userId', {userId})
-                .orWhere('pm.id = :userId', {userId})
-                .orWhere('m.id = :userId', {userId})
-        }))
+    return getProjectsQuery.getMany();
+  }
 
-        getProjectsQuery.skip((page - 1) * limit).take(limit)
+  async getOneProject(projectId: number, userId: number) {
+    const project = await this.getProjectByIdOrFail(projectId);
 
-        return getProjectsQuery.getMany();
+    if (!this.isMemberOfProject(userId, project)) {
+      throw new UnauthorizedException('You cannot get this project');
     }
+
+    return project;
+  }
 }

@@ -11,6 +11,7 @@
       true,
       "single"
     ],
+    "trailing-comma": true,
     "member-access": [
       false
     ],
