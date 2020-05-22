@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiResponse, ApiUseTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiUseTags } from '@nestjs/swagger';
 import { Scopes } from '../../shared/decorator/scopes.decorator';
 import { PermissionScopes } from '../user/entity/permission.entity';
 import { CreateEpicBody } from './dto/create-epic.dto';

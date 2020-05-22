@@ -27,6 +27,14 @@ export class UserService implements OnApplicationBootstrap {
     await this.initAdmin();
   }
 
+  async getUserByIdOrFail(userId: number) {
+    try {
+      return await this.userRepo.findOneOrFail({ id: userId });
+    } catch (e) {
+      throw new NotFoundException('User not found');
+    }
+  }
+
   async create(
     username: string,
     password: string,
@@ -137,6 +145,15 @@ export class UserService implements OnApplicationBootstrap {
     return this.userRepo.save(user);
   }
 
+  async getOneUser(userId: number) {
+    const user = await this.userRepo.findOne({ id: userId, username: Not(this.configService.get('ADMIN_USERNAME')) });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
   private async initAdmin() {
     const adminUsername = this.configService.get('ADMIN_USERNAME');
     const adminPassword = this.configService.get('ADMIN_PASSWORD');
@@ -215,14 +232,5 @@ export class UserService implements OnApplicationBootstrap {
         this.roleRepo.save({ name: Roles.Guest }),
       ]);
     }
-  }
-
-  async getOneUser(userId: number) {
-    const user = await this.userRepo.findOne({ id: userId, username: Not(this.configService.get('ADMIN_USERNAME')) });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return user;
   }
 }

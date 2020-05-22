@@ -2,29 +2,27 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { InjectRepository } from '@nestjs/typeorm';
 import { EpicEntity } from './entity/epic.entity';
 import { Repository } from 'typeorm';
-import { ProjectEntity } from '../project/entity/project.entity';
-import { CommonRepoService } from '../../shared/module/common-repo/common-repo.service';
+import { ProjectService } from '../project/project.service';
 
 @Injectable()
 export class EpicService {
   constructor(
     @InjectRepository(EpicEntity) private readonly epicRepo: Repository<EpicEntity>,
-    @InjectRepository(ProjectEntity) private readonly projectRepo: Repository<ProjectEntity>,
-    private readonly commonRepo: CommonRepoService,
+    private readonly projectService: ProjectService,
   ) {}
 
-  isMemberOfProject(userId: number, project: ProjectEntity) {
-    return !(project.pmId !== userId && project.leaderId !== userId && !project.memberIds.includes(userId));
-  }
-
-  private isPMOfProject(userId: number, project: ProjectEntity) {
-    return project.pmId === userId;
+  async getEpicByIdOrFail(epicId: number) {
+    try {
+      return await this.epicRepo.findOneOrFail({ id: epicId });
+    } catch (e) {
+      throw new NotFoundException('Epic not found');
+    }
   }
 
   async createEpic(projectId: number, userId: number, name: string, description: string, startDate: Date, endDate: Date) {
-    const project = await this.commonRepo.getProjectByIdOrFail(projectId);
+    const project = await this.projectService.getProjectByIdOrFail(projectId);
 
-    if (!this.isPMOfProject(userId, project)) {
+    if (!this.projectService.isPMOfProject(userId, project)) {
       throw new UnauthorizedException('You cannnot create epic for this project');
     }
 
@@ -34,11 +32,11 @@ export class EpicService {
   }
 
   async updateEpic(epicId: number, userId: number, name?: string, description?: string, startDate?: Date, endDate?: Date) {
-    const epic = await this.commonRepo.getEpicByIdOrFail(epicId);
+    const epic = await this.getEpicByIdOrFail(epicId);
 
-    const project = await this.commonRepo.getProjectByIdOrFail(epic.projectId);
+    const project = await this.projectService.getProjectByIdOrFail(epic.projectId);
 
-    if (!this.isPMOfProject(userId, project)) {
+    if (!this.projectService.isPMOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot update this epic');
     }
 
@@ -62,11 +60,11 @@ export class EpicService {
   }
 
   async getOneEpic(epicId: number, userId: number) {
-    const epic = await this.commonRepo.getEpicByIdOrFail(epicId);
+    const epic = await this.getEpicByIdOrFail(epicId);
 
-    const project = await this.commonRepo.getProjectByIdOrFail(epic.projectId);
+    const project = await this.projectService.getProjectByIdOrFail(epic.projectId);
 
-    if (!this.isMemberOfProject(userId, project)) {
+    if (!this.projectService.isMemberOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot get this epic');
     }
 
@@ -74,9 +72,9 @@ export class EpicService {
   }
 
   async getManyEpic(projectId: number, userId: number) {
-    const project = await this.commonRepo.getProjectByIdOrFail(projectId);
+    const project = await this.projectService.getProjectByIdOrFail(projectId);
 
-    if (!this.isMemberOfProject(userId, project)) {
+    if (!this.projectService.isMemberOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot get epics of this project');
     }
 

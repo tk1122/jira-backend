@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
 import { IssueEntity } from '../../issue/entity/issue.entity';

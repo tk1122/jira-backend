@@ -1,5 +1,5 @@
 import { Column, Entity, JoinTable, ManyToMany, OneToMany, RelationId } from 'typeorm';
-import { ApiModelProperty, ApiResponseModelProperty } from '@nestjs/swagger';
+import { ApiResponseModelProperty } from '@nestjs/swagger';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { RoleEntity } from './role.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';

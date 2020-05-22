@@ -4,6 +4,7 @@ import { UserEntity } from '../../user/entity/user.entity';
 import { EpicEntity } from '../../epic/entity/epic.entity';
 import { SprintEntity } from '../../sprint/entity/sprint.entity';
 import { ApiResponseModelProperty } from '@nestjs/swagger';
+import { IssueEntity } from '../../issue/entity/issue.entity';
 
 @Entity({ name: 'project' })
 export class ProjectEntity extends DefaultEntity {
@@ -64,6 +65,12 @@ export class ProjectEntity extends DefaultEntity {
     s => s.project,
   )
   sprints: SprintEntity[];
+
+  @OneToMany(
+    () => IssueEntity,
+    s => s.project,
+  )
+  issues: SprintEntity[];
 
   constructor(name: string, description: string, pm: UserEntity, leader: UserEntity) {
     super();

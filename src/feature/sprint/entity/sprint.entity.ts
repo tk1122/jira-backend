@@ -1,7 +1,8 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
 import { ApiResponseModelProperty } from '@nestjs/swagger';
+import { IssueEntity } from '../../issue/entity/issue.entity';
 
 @Entity('sprint')
 export class SprintEntity extends DefaultEntity {
@@ -43,6 +44,12 @@ export class SprintEntity extends DefaultEntity {
   @ApiResponseModelProperty()
   @Column({ name: 'project_id' })
   projectId: number;
+
+  @OneToMany(
+    () => IssueEntity,
+    i => i.sprint,
+  )
+  issues: IssueEntity[];
 
   constructor(name: string, description: string, projectId: number) {
     super();

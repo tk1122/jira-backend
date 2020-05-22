@@ -3,6 +3,9 @@ import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { UserEntity } from '../../user/entity/user.entity';
 import { EpicEntity } from '../../epic/entity/epic.entity';
 import { LabelEntity } from './label.entity';
+import { ApiResponseModelProperty } from '@nestjs/swagger';
+import { SprintEntity } from '../../sprint/entity/sprint.entity';
+import { ProjectEntity } from '../../project/entity/project.entity';
 
 export enum IssueStatus {
   Todo,
@@ -25,25 +28,32 @@ export enum IssueType {
 
 @Entity('issue')
 export class IssueEntity extends DefaultEntity {
+  @ApiResponseModelProperty()
   @Column()
   name: string;
 
   @Column()
+  @ApiResponseModelProperty()
   description: string;
 
   @Column({ name: 'entity_type', type: 'tinyint' })
+  @ApiResponseModelProperty()
   entityType: IssueEntityType;
 
   @Column({ name: 'story_point' })
+  @ApiResponseModelProperty()
   storyPoint: number;
 
   @Column({ type: 'tinyint' })
+  @ApiResponseModelProperty()
   status: IssueStatus;
 
   @Column({ type: 'tinyint' })
+  @ApiResponseModelProperty()
   priority: IssuePriority;
 
   @Column({ type: 'tinyint' })
+  @ApiResponseModelProperty()
   type: IssueType;
 
   @ManyToOne(
@@ -54,6 +64,7 @@ export class IssueEntity extends DefaultEntity {
   assignee: UserEntity;
 
   @Column({ name: 'assignee_id' })
+  @ApiResponseModelProperty()
   assigneeId: number;
 
   @ManyToOne(
@@ -64,17 +75,43 @@ export class IssueEntity extends DefaultEntity {
   reporter: UserEntity;
 
   @Column({ name: 'reporter_id' })
+  @ApiResponseModelProperty()
   reporterId: number;
+
+  @ManyToOne(
+    () => ProjectEntity,
+    p => p.issues,
+  )
+  @JoinColumn({ name: 'project_id' })
+  project: ProjectEntity;
+
+  @Column({ name: 'project_id' })
+  @ApiResponseModelProperty()
+  projectId: number;
 
   @ManyToOne(
     () => EpicEntity,
     e => e.issues,
+    { nullable: true },
   )
   @JoinColumn({ name: 'epic_id' })
-  epic: EpicEntity;
+  epic?: EpicEntity;
 
-  @Column({ name: 'epic_id' })
-  epicId: number;
+  @Column({ name: 'epic_id', nullable: true })
+  @ApiResponseModelProperty()
+  epicId?: number;
+
+  @ManyToOne(
+    () => SprintEntity,
+    s => s.issues,
+    { nullable: true },
+  )
+  @JoinColumn({ name: 'sprint_id' })
+  sprint?: SprintEntity;
+
+  @Column({ name: 'sprint_id', nullable: true })
+  @ApiResponseModelProperty()
+  sprintId?: number;
 
   @ManyToMany(() => LabelEntity)
   @JoinTable({
@@ -84,31 +121,40 @@ export class IssueEntity extends DefaultEntity {
   })
   labels: LabelEntity[];
 
+  @ApiResponseModelProperty()
+  @RelationId((issue: IssueEntity) => issue.labels)
+  labelIds: number[];
+
   constructor(
     name: string,
     description: string,
-    assignee: UserEntity,
-    reporter: UserEntity,
-    epic: EpicEntity,
+    assigneeId: number,
+    reporterId: number,
+    projectId: number,
+    epicId?: number,
+    sprintId?: number,
+    labelIds?: number[],
     storyPoint?: number,
     priority?: IssuePriority,
     type?: IssueType,
-    labels?: LabelEntity[],
   ) {
     super();
 
     this.name = name;
     this.description = description;
-    this.assignee = assignee;
-    this.reporter = reporter;
-    this.epic = epic;
+    this.assigneeId = assigneeId;
+    this.reporterId = reporterId;
+    this.projectId = projectId;
+
+    this.epicId = epicId;
+    this.sprintId = sprintId;
+    if (labelIds) {
+      this.labelIds = labelIds;
+    }
 
     this.storyPoint = storyPoint ?? 0;
     this.priority = priority ?? IssuePriority.Medium;
     this.type = type ?? IssueType.Task;
-    if (labels !== undefined) {
-      this.labels = labels;
-    }
 
     this.status = IssueStatus.Todo;
     this.entityType = 3;

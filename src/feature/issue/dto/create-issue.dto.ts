@@ -21,7 +21,17 @@ export class CreateIssueBody {
 
   @ApiModelProperty()
   @IsNumber()
-  epicId: number;
+  projectId: number;
+
+  @ApiModelProperty()
+  @IsNumber()
+  @IsOptional()
+  epicId?: number;
+
+  @ApiModelProperty()
+  @IsNumber()
+  @IsOptional()
+  sprintId?: number;
 
   @ApiModelProperty()
   @IsInt()

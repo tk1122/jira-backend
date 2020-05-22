@@ -1,4 +1,4 @@
-import { ApiModelProperty, ApiResponseModelProperty } from '@nestjs/swagger';
+import { ApiResponseModelProperty } from '@nestjs/swagger';
 import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 export abstract class DefaultEntity {

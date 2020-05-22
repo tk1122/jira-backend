@@ -1,11 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProjectEntity, ProjectStatus } from './entity/project.entity';
-import { Brackets, Like, Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { UserEntity } from '../user/entity/user.entity';
 import { RoleEntity, Roles } from '../user/entity/role.entity';
-import { CommonRepoService } from '../../shared/module/common-repo/common-repo.service';
-import { EpicService } from '../epic/epic.service';
 
 @Injectable()
 export class ProjectService {
@@ -13,9 +11,27 @@ export class ProjectService {
     @InjectRepository(ProjectEntity) private readonly projectRepo: Repository<ProjectEntity>,
     @InjectRepository(UserEntity) private readonly userRepo: Repository<UserEntity>,
     @InjectRepository(RoleEntity) private readonly roleRepo: Repository<RoleEntity>,
-    private readonly commonRepoService: CommonRepoService,
-    private readonly epicService: EpicService,
   ) {}
+
+  async getProjectByIdOrFail(projectId: number) {
+    try {
+      return await this.projectRepo.findOneOrFail({ id: projectId });
+    } catch (e) {
+      throw new NotFoundException('Project not found');
+    }
+  }
+
+  isLeaderOfProject(userId: number, project: ProjectEntity) {
+    return project.leaderId === userId;
+  }
+
+  isPMOfProject(userId: number, project: ProjectEntity) {
+    return project.pmId === userId;
+  }
+
+  isMemberOfProject(userId: number, project: ProjectEntity) {
+    return !(project.pmId !== userId && project.leaderId !== userId && !project.memberIds.includes(userId));
+  }
 
   async createProject(name: string, description: string, pmId: number, leaderId: number) {
     const leader = await this.userRepo
@@ -82,9 +98,9 @@ export class ProjectService {
   }
 
   async getOneProject(projectId: number, userId: number) {
-    const project = await this.commonRepoService.getProjectByIdOrFail(projectId);
+    const project = await this.getProjectByIdOrFail(projectId);
 
-    if (!this.epicService.isMemberOfProject(userId, project)) {
+    if (!this.isMemberOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot get this project');
     }
 

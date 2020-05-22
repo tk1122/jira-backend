@@ -4,10 +4,10 @@ import { EpicService } from './epic.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EpicEntity } from './entity/epic.entity';
 import { ProjectEntity } from '../project/entity/project.entity';
-import { CommonRepoModule } from '../../shared/module/common-repo/common-repo.module';
+import { ProjectModule } from '../project/project.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([EpicEntity, ProjectEntity]), CommonRepoModule],
+  imports: [TypeOrmModule.forFeature([EpicEntity, ProjectEntity]), ProjectModule],
   controllers: [EpicController],
   providers: [EpicService],
   exports: [EpicService],

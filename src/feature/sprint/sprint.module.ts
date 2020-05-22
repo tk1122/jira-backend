@@ -4,12 +4,12 @@ import { SprintService } from './sprint.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SprintEntity } from './entity/sprint.entity';
 import { ProjectEntity } from '../project/entity/project.entity';
-import { EpicModule } from '../epic/epic.module';
-import { CommonRepoModule } from '../../shared/module/common-repo/common-repo.module';
+import { ProjectModule } from '../project/project.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SprintEntity, ProjectEntity]), EpicModule, CommonRepoModule],
+  imports: [TypeOrmModule.forFeature([SprintEntity, ProjectEntity]), ProjectModule],
   controllers: [SprintController],
   providers: [SprintService],
+  exports: [SprintService],
 })
 export class SprintModule {}

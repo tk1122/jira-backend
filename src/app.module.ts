@@ -16,7 +16,6 @@ import { SprintEntity } from './feature/sprint/entity/sprint.entity';
 import { IssueEntity } from './feature/issue/entity/issue.entity';
 import { LabelEntity } from './feature/issue/entity/label.entity';
 import { IssueModule } from './feature/issue/issue.module';
-import { CommonRepoModule } from './shared/module/common-repo/common-repo.module';
 
 @Module({
   imports: [
@@ -46,7 +45,6 @@ import { CommonRepoModule } from './shared/module/common-repo/common-repo.module
     SprintModule,
     EpicModule,
     IssueModule,
-    CommonRepoModule,
   ],
 })
 export class AppModule {}

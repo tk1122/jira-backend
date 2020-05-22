@@ -2,33 +2,27 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { InjectRepository } from '@nestjs/typeorm';
 import { SprintEntity, SprintStatus } from './entity/sprint.entity';
 import { Repository } from 'typeorm';
-import { ProjectEntity } from '../project/entity/project.entity';
-import { EpicService } from '../epic/epic.service';
-import { CommonRepoService } from '../../shared/module/common-repo/common-repo.service';
+import { ProjectService } from '../project/project.service';
 
 @Injectable()
 export class SprintService {
   constructor(
     @InjectRepository(SprintEntity) private readonly sprintRepo: Repository<SprintEntity>,
-    @InjectRepository(ProjectEntity) private readonly projectRepo: Repository<ProjectEntity>,
-    private readonly epicService: EpicService,
-    private readonly commonRepo: CommonRepoService,
+    private readonly projectService: ProjectService,
   ) {}
 
-  private isLeaderOfProject(userId: number, project: ProjectEntity) {
-    return project.leaderId === userId;
-  }
-
-  private async canUserEditSprint(userId: number, sprint: SprintEntity) {
-    const project = await this.commonRepo.getProjectByIdOrFail(sprint.projectId);
-
-    return this.isLeaderOfProject(userId, project);
+  async getSprintByIdOrFail(sprintId: number) {
+    try {
+      return await this.sprintRepo.findOneOrFail({ id: sprintId });
+    } catch (e) {
+      throw new NotFoundException('Sprint not found');
+    }
   }
 
   async createSprint(projectId: number, userId: number, name: string, description: string) {
-    const project = await this.commonRepo.getProjectByIdOrFail(projectId);
+    const project = await this.projectService.getProjectByIdOrFail(projectId);
 
-    if (!this.isLeaderOfProject(userId, project)) {
+    if (!this.projectService.isLeaderOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot create sprint for this project');
     }
 
@@ -38,7 +32,7 @@ export class SprintService {
   }
 
   async updateSprint(sprintId: number, userId: number, name?: string, description?: string) {
-    const sprint = await this.commonRepo.getSprintByIdOrFail(sprintId);
+    const sprint = await this.getSprintByIdOrFail(sprintId);
 
     if (!(await this.canUserEditSprint(userId, sprint))) {
       throw new BadRequestException('You cannot update this sprint');
@@ -56,7 +50,7 @@ export class SprintService {
   }
 
   async startSprint(sprintId: number, userId: number) {
-    const sprint = await this.commonRepo.getSprintByIdOrFail(sprintId);
+    const sprint = await this.getSprintByIdOrFail(sprintId);
 
     if (!(await this.canUserEditSprint(userId, sprint))) {
       throw new BadRequestException('You cannot start this sprint');
@@ -96,11 +90,11 @@ export class SprintService {
   }
 
   async getOneSprint(sprintId: number, userId: number) {
-    const sprint = await this.commonRepo.getSprintByIdOrFail(sprintId);
+    const sprint = await this.getSprintByIdOrFail(sprintId);
 
-    const project = await this.commonRepo.getProjectByIdOrFail(sprint.projectId);
+    const project = await this.projectService.getProjectByIdOrFail(sprint.projectId);
 
-    if (!this.epicService.isMemberOfProject(userId, project)) {
+    if (!this.projectService.isMemberOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot read this sprint');
     }
 
@@ -108,12 +102,18 @@ export class SprintService {
   }
 
   async getManySprints(projectId: number, userId: number) {
-    const project = await this.commonRepo.getProjectByIdOrFail(projectId);
+    const project = await this.projectService.getProjectByIdOrFail(projectId);
 
-    if (!this.epicService.isMemberOfProject(userId, project)) {
+    if (!this.projectService.isMemberOfProject(userId, project)) {
       throw new UnauthorizedException('You are not a member of this project');
     }
 
     return this.sprintRepo.find({ project });
+  }
+
+  private async canUserEditSprint(userId: number, sprint: SprintEntity) {
+    const project = await this.projectService.getProjectByIdOrFail(sprint.projectId);
+
+    return this.projectService.isLeaderOfProject(userId, project);
   }
 }
