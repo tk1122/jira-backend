@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Logger, Param, Put, Query } from '@nestjs/common';
 import { UserService } from './user.service';
-import { ApiUseTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiUseTags } from '@nestjs/swagger';
 import { Scopes } from '../../shared/decorator/scopes.decorator';
 import { PermissionScopes } from './entity/permission.entity';
 import { SetRoleBody } from './dto/set-role.dto';
@@ -8,6 +8,7 @@ import { GetUserQuery } from './dto/get-users.dto';
 import { UpdateUserBody } from './dto/update-user.dto';
 import { User } from '../../shared/decorator/user.decorator';
 import { UserSession } from '../../shared/interface/session.interface';
+import { UserEntity } from './entity/user.entity';
 
 // @ts-ignore
 
@@ -20,8 +21,16 @@ export class UserController {
 
   @Get('')
   @Scopes(PermissionScopes.ReadUser)
+  @ApiOkResponse({ type: UserEntity, isArray: true })
   async getUsers(@Query() getUsersQuery: GetUserQuery, @User() user: UserSession) {
     return this.userService.getUsers(getUsersQuery.username, getUsersQuery.page, getUsersQuery.limit, !user.isAdmin);
+  }
+
+  @Get(':id')
+  @Scopes(PermissionScopes.ReadUser)
+  @ApiOkResponse({ type: UserEntity })
+  async getOneUser(@Param('id') userId: number) {
+    return this.userService.getOneUser(userId);
   }
 
   @Get('roles')

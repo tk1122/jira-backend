@@ -3,18 +3,23 @@ import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { UserEntity } from '../../user/entity/user.entity';
 import { EpicEntity } from '../../epic/entity/epic.entity';
 import { SprintEntity } from '../../sprint/entity/sprint.entity';
+import { ApiResponseModelProperty } from '@nestjs/swagger';
 
 @Entity({ name: 'project' })
 export class ProjectEntity extends DefaultEntity {
+  @ApiResponseModelProperty()
   @Column()
   name: string;
 
+  @ApiResponseModelProperty()
   @Column()
   description: string;
 
+  @ApiResponseModelProperty()
   @Column()
   status: ProjectStatus;
 
+  @ApiResponseModelProperty()
   @Column({ name: 'entity_type', type: 'tinyint' })
   entityType: ProjectEntityType;
 
@@ -25,6 +30,7 @@ export class ProjectEntity extends DefaultEntity {
   @JoinColumn({ name: 'pm_id' })
   pm: UserEntity;
 
+  @ApiResponseModelProperty()
   @Column({ name: 'pm_id' })
   pmId: number;
 
@@ -35,6 +41,7 @@ export class ProjectEntity extends DefaultEntity {
   @JoinColumn({ name: 'leader_id' })
   leader: UserEntity;
 
+  @ApiResponseModelProperty()
   @Column({ name: 'leader_id' })
   leaderId: number;
 
@@ -42,6 +49,7 @@ export class ProjectEntity extends DefaultEntity {
   @JoinTable({ name: 'project_member', joinColumn: { name: 'project_id' }, inverseJoinColumn: { name: 'member_id' } })
   members: UserEntity[];
 
+  @ApiResponseModelProperty()
   @RelationId((project: ProjectEntity) => project.members)
   memberIds: number[];
 

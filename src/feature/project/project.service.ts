@@ -1,9 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProjectEntity, ProjectStatus } from './entity/project.entity';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, Like, Repository } from 'typeorm';
 import { UserEntity } from '../user/entity/user.entity';
 import { RoleEntity, Roles } from '../user/entity/role.entity';
+import { CommonRepoService } from '../../shared/module/common-repo/common-repo.service';
+import { EpicService } from '../epic/epic.service';
 
 @Injectable()
 export class ProjectService {
@@ -11,6 +13,8 @@ export class ProjectService {
     @InjectRepository(ProjectEntity) private readonly projectRepo: Repository<ProjectEntity>,
     @InjectRepository(UserEntity) private readonly userRepo: Repository<UserEntity>,
     @InjectRepository(RoleEntity) private readonly roleRepo: Repository<RoleEntity>,
+    private readonly commonRepoService: CommonRepoService,
+    private readonly epicService: EpicService,
   ) {}
 
   async createProject(name: string, description: string, pmId: number, leaderId: number) {
@@ -53,9 +57,9 @@ export class ProjectService {
   async getProjects(userId: number, name = '', status?: ProjectStatus, page = 1, limit = 10) {
     const getProjectsQuery = this.projectRepo
       .createQueryBuilder('p')
-      .select(['p', 'l.id', 'pm.id'])
+      .select(['p'])
       .where('p.name LIKE :name', { name: `${name}%` })
-      // .innerJoin('p.members', 'm')
+      .innerJoin('p.members', 'm')
       .innerJoin('p.leader', 'l')
       .innerJoin('p.pm', 'pm');
 
@@ -75,5 +79,15 @@ export class ProjectService {
     getProjectsQuery.skip((page - 1) * limit).take(limit);
 
     return getProjectsQuery.getMany();
+  }
+
+  async getOneProject(projectId: number, userId: number) {
+    const project = await this.commonRepoService.getProjectByIdOrFail(projectId);
+
+    if (!this.epicService.isMemberOfProject(userId, project)) {
+      throw new UnauthorizedException('You cannot get this project');
+    }
+
+    return project;
   }
 }

@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity, UserStatus } from './entity/user.entity';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { genSalt, hash } from 'bcrypt';
 import { ConfigService } from '../../shared/module/config/config.service';
 import { RoleEntity, Roles } from './entity/role.entity';
@@ -107,7 +107,6 @@ export class UserService implements OnApplicationBootstrap {
   async getUsers(username: string = '', page: number = 1, limit: number = 10, fetchOnlyActiveUsers = true) {
     const getUsersQuery = this.userRepo
       .createQueryBuilder('u')
-      .innerJoinAndSelect('u.roles', 'r')
       .where('u.username LIKE :username', { username: `${username}%` })
       .andWhere('u.username != :admin', { admin: this.configService.get('ADMIN_USERNAME') })
       .skip((page - 1) * limit)
@@ -216,5 +215,14 @@ export class UserService implements OnApplicationBootstrap {
         this.roleRepo.save({ name: Roles.Guest }),
       ]);
     }
+  }
+
+  async getOneUser(userId: number) {
+    const user = await this.userRepo.findOne({ id: userId, username: Not(this.configService.get('ADMIN_USERNAME')) });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
 }

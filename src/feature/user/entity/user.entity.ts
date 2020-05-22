@@ -1,5 +1,5 @@
-import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, RelationId } from 'typeorm';
+import { ApiModelProperty, ApiResponseModelProperty } from '@nestjs/swagger';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { RoleEntity } from './role.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
@@ -7,50 +7,53 @@ import { IssueEntity } from '../../issue/entity/issue.entity';
 
 @Entity('user')
 export class UserEntity extends DefaultEntity {
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @Column()
   username: string;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @Column({ nullable: true })
   fullname?: string;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @Column({
     type: 'tinyint',
   })
   status: UserStatus;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @Column({
     select: false,
   })
   password: string;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @Column({ nullable: true })
   email?: string;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @Column({ nullable: true })
   skill?: string;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @Column({ nullable: true })
   level?: string;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @Column({ nullable: true })
   age?: number;
 
-  @ApiModelProperty()
+  @ApiResponseModelProperty()
   @Column({ type: 'tinyint', nullable: true })
   gender?: UserGender;
 
-  @ApiModelProperty()
   @ManyToMany(() => RoleEntity)
   @JoinTable({ name: 'user_role', joinColumn: { name: 'user_id' }, inverseJoinColumn: { name: 'role_id' } })
   roles: RoleEntity[];
+
+  @ApiResponseModelProperty()
+  @RelationId((user: UserEntity) => user.roles)
+  roleIds: number[];
 
   @OneToMany(
     () => ProjectEntity,
