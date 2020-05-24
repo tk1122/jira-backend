@@ -26,6 +26,8 @@ export enum IssueType {
   Bug,
 }
 
+export type IssueEntityType = 3;
+
 @Entity('issue')
 export class IssueEntity extends DefaultEntity {
   @ApiResponseModelProperty()
@@ -61,7 +63,7 @@ export class IssueEntity extends DefaultEntity {
     u => u.assignedIssues,
   )
   @JoinColumn({ name: 'assignee_id' })
-  assignee: UserEntity;
+  assignee?: UserEntity;
 
   @Column({ name: 'assignee_id' })
   @ApiResponseModelProperty()
@@ -72,7 +74,7 @@ export class IssueEntity extends DefaultEntity {
     u => u.reportedIssues,
   )
   @JoinColumn({ name: 'reporter_id' })
-  reporter: UserEntity;
+  reporter?: UserEntity;
 
   @Column({ name: 'reporter_id' })
   @ApiResponseModelProperty()
@@ -83,7 +85,7 @@ export class IssueEntity extends DefaultEntity {
     p => p.issues,
   )
   @JoinColumn({ name: 'project_id' })
-  project: ProjectEntity;
+  project?: ProjectEntity;
 
   @Column({ name: 'project_id' })
   @ApiResponseModelProperty()
@@ -95,11 +97,11 @@ export class IssueEntity extends DefaultEntity {
     { nullable: true },
   )
   @JoinColumn({ name: 'epic_id' })
-  epic?: EpicEntity;
+  epic?: EpicEntity | null;
 
   @Column({ name: 'epic_id', nullable: true })
   @ApiResponseModelProperty()
-  epicId?: number;
+  epicId: number | null;
 
   @ManyToOne(
     () => SprintEntity,
@@ -107,11 +109,11 @@ export class IssueEntity extends DefaultEntity {
     { nullable: true },
   )
   @JoinColumn({ name: 'sprint_id' })
-  sprint?: SprintEntity;
+  sprint?: SprintEntity | null;
 
   @Column({ name: 'sprint_id', nullable: true })
   @ApiResponseModelProperty()
-  sprintId?: number;
+  sprintId: number | null;
 
   @ManyToMany(() => LabelEntity)
   @JoinTable({
@@ -119,7 +121,7 @@ export class IssueEntity extends DefaultEntity {
     joinColumn: { name: 'issue_id' },
     inverseJoinColumn: { name: 'label_id' },
   })
-  labels: LabelEntity[];
+  labels?: LabelEntity[];
 
   @ApiResponseModelProperty()
   @RelationId((issue: IssueEntity) => issue.labels)
@@ -131,9 +133,9 @@ export class IssueEntity extends DefaultEntity {
     assignee: UserEntity,
     reporter: UserEntity,
     project: ProjectEntity,
+    labels?: LabelEntity[],
     epic?: EpicEntity,
     sprint?: SprintEntity,
-    labels?: LabelEntity[],
     storyPoint?: number,
     priority?: IssuePriority,
     type?: IssueType,
@@ -145,14 +147,13 @@ export class IssueEntity extends DefaultEntity {
     this.assignee = assignee;
     this.reporter = reporter;
     this.project = project;
-
-    this.epic = epic;
-    this.sprint = sprint;
     if (labels) {
       this.labels = labels;
     }
+    this.epic = epic;
+    this.sprint = sprint;
 
-    this.storyPoint = storyPoint ?? 0;
+    this.storyPoint = storyPoint ?? 1;
     this.priority = priority ?? IssuePriority.Medium;
     this.type = type ?? IssueType.Task;
 
@@ -160,5 +161,3 @@ export class IssueEntity extends DefaultEntity {
     this.entityType = 3;
   }
 }
-
-export type IssueEntityType = 3;

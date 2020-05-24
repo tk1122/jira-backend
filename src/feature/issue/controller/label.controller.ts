@@ -7,7 +7,6 @@ import { IssueService } from '../issue.service';
 import { User } from '../../../shared/decorator/user.decorator';
 import { UserSession } from '../../../shared/interface/session.interface';
 import { GetManyLabelQuery } from '../dto/get-label.dto';
-import { IssueEntity } from '../entity/issue.entity';
 import { LabelEntity } from '../entity/label.entity';
 
 @Controller('labels')

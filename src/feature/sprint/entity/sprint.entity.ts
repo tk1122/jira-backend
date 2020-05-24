@@ -69,4 +69,4 @@ export enum SprintStatus {
   Finished,
 }
 
-type SprintEntityType = 2;
+export type SprintEntityType = 2;

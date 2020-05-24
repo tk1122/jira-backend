@@ -1,5 +1,5 @@
 import { DefaultEntity } from '../../../shared/interface/default.entity';
-import { Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { ProjectEntity } from '../../project/entity/project.entity';
 import { ApiResponseModelProperty } from '@nestjs/swagger';
 

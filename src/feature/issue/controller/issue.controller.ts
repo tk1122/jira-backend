@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiUseTags } from '@nestjs/swagger';
 import { IssueService } from '../issue.service';
 import { Scopes } from '../../../shared/decorator/scopes.decorator';
@@ -8,6 +8,7 @@ import { User } from '../../../shared/decorator/user.decorator';
 import { UserSession } from '../../../shared/interface/session.interface';
 import { IssueEntity } from '../entity/issue.entity';
 import { GetManyIssueQuery } from '../dto/get-issue.dto';
+import { UpdateIssueBody } from '../dto/update-issue.dto';
 
 @Controller('issues')
 @ApiUseTags('issues')
@@ -50,5 +51,29 @@ export class IssueController {
   @ApiOkResponse({ type: IssueEntity, isArray: true })
   getManyIssue(@Query() { projectId }: GetManyIssueQuery, @User() { userId }: UserSession) {
     return this.issueService.getManyIssues(projectId, userId);
+  }
+
+  @Put(':id')
+  @Scopes(PermissionScopes.WriteIssue)
+  @ApiOkResponse({ type: IssueEntity })
+  updateIssue(
+    @Param('id') issueId: number,
+    @Body() { name, description, assigneeId, reporterId, epicId, sprintId, type, storyPoint, priority, labelIds }: UpdateIssueBody,
+    @User() { userId }: UserSession,
+  ) {
+    return this.issueService.updateIssue(
+      issueId,
+      userId,
+      name,
+      description,
+      assigneeId,
+      reporterId,
+      epicId,
+      sprintId,
+      type,
+      storyPoint,
+      priority,
+      labelIds,
+    );
   }
 }
