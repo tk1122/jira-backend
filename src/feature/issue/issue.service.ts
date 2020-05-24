@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IssueEntity, IssuePriority, IssueType } from './entity/issue.entity';
+import { IssueEntity, IssuePriority, IssueType, IssueStatus } from './entity/issue.entity';
 import { Repository } from 'typeorm';
 import { LabelEntity } from './entity/label.entity';
 import { ProjectService } from '../project/project.service';
@@ -241,5 +241,29 @@ export class IssueService {
     await this.issueRepo.save(issue);
 
     return this.issueRepo.findOneOrFail(issue.id);
+  }
+
+  async updateIssueStatus(issueId: number, userId: number, status: IssueStatus) {
+    const issue = await this.getIssueByIdOrFail(issueId);
+
+    if (userId !== issue.assigneeId) {
+      throw new UnauthorizedException('You cannot update status of this issue');
+    }
+
+    issue.status = status;
+
+    return this.issueRepo.save(issue);
+  }
+
+  async deleteIssue(issueId: number, userId: number) {
+    const issue = await this.getIssueByIdOrFail(issueId);
+
+    const project = await this.projectService.getProjectByIdOrFail(issue.projectId);
+
+    if (!this.projectService.isLeaderOfProject(userId, project)) {
+      throw new UnauthorizedException('You cannnot delete this issue');
+    }
+
+    return this.issueRepo.remove(issue);
   }
 }

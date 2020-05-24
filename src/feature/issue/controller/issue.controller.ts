@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiUseTags } from '@nestjs/swagger';
 import { IssueService } from '../issue.service';
 import { Scopes } from '../../../shared/decorator/scopes.decorator';
@@ -8,7 +8,7 @@ import { User } from '../../../shared/decorator/user.decorator';
 import { UserSession } from '../../../shared/interface/session.interface';
 import { IssueEntity } from '../entity/issue.entity';
 import { GetManyIssueQuery } from '../dto/get-issue.dto';
-import { UpdateIssueBody } from '../dto/update-issue.dto';
+import { UpdateIssueBody, UpdateIssueStatusBody } from '../dto/update-issue.dto';
 
 @Controller('issues')
 @ApiUseTags('issues')
@@ -75,5 +75,19 @@ export class IssueController {
       priority,
       labelIds,
     );
+  }
+
+  @Put(':id/status')
+  @Scopes(PermissionScopes.WriteIssue)
+  @ApiOkResponse({ type: IssueEntity })
+  updateIssueStatus(@Param('id') issueId: number, @Body() { status }: UpdateIssueStatusBody, @User() { userId }: UserSession) {
+    return this.issueService.updateIssueStatus(issueId, userId, status)
+  }
+
+  @Delete(':id')
+  @Scopes(PermissionScopes.WriteIssue)
+  @ApiOkResponse({type: IssueEntity})
+  deleteIssue(@Param('id') issueId: number, @User() {userId}: UserSession) {
+    return this.issueService.deleteIssue(issueId, userId)
   }
 }

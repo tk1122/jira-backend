@@ -1,6 +1,6 @@
 import { ApiModelProperty } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, IsString, Min, ValidateIf } from 'class-validator';
-import { IssuePriority, IssueType } from '../entity/issue.entity';
+import { IsArray, IsEnum, IsInt, IsOptional, IsString, Min, NotEquals, ValidateIf } from 'class-validator';
+import { IssuePriority, IssueStatus, IssueType } from '../entity/issue.entity';
 
 export class UpdateIssueBody {
   @ApiModelProperty()
@@ -54,7 +54,14 @@ export class UpdateIssueBody {
   type?: IssueType;
 
   @ApiModelProperty()
-  @IsInt({ each: true })
   @ValidateIf((o: UpdateIssueBody) => o.labelIds !== undefined)
+  @IsInt({ each: true })
+  @IsArray()
   labelIds?: number[];
+}
+
+export class UpdateIssueStatusBody {
+  @ApiModelProperty()
+  @IsEnum(IssueStatus)
+  status: IssueStatus
 }

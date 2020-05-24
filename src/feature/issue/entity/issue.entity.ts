@@ -94,7 +94,7 @@ export class IssueEntity extends DefaultEntity {
   @ManyToOne(
     () => EpicEntity,
     e => e.issues,
-    { nullable: true },
+    { nullable: true, onDelete: 'SET NULL' },
   )
   @JoinColumn({ name: 'epic_id' })
   epic?: EpicEntity | null;
@@ -106,7 +106,7 @@ export class IssueEntity extends DefaultEntity {
   @ManyToOne(
     () => SprintEntity,
     s => s.issues,
-    { nullable: true },
+    { nullable: true, onDelete: 'SET NULL' },
   )
   @JoinColumn({ name: 'sprint_id' })
   sprint?: SprintEntity | null;
