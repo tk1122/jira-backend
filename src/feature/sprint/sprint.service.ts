@@ -116,4 +116,16 @@ export class SprintService {
 
     return this.projectService.isLeaderOfProject(userId, project);
   }
+
+  async deleteSprint(sprintId: number, userId: number) {
+    const sprint = await this.getSprintByIdOrFail(sprintId);
+
+    const project = await this.projectService.getProjectByIdOrFail(sprint.projectId);
+
+    if (!this.projectService.isLeaderOfProject(userId, project)) {
+      throw new UnauthorizedException('You cannot delete this sprint');
+    }
+
+    return this.sprintRepo.remove(sprint);
+  }
 }

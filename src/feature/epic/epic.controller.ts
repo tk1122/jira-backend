@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiUseTags } from '@nestjs/swagger';
 import { Scopes } from '../../shared/decorator/scopes.decorator';
 import { PermissionScopes } from '../user/entity/permission.entity';
@@ -45,5 +45,15 @@ export class EpicController {
   @Scopes(PermissionScopes.ReadEpic)
   getManyEpic(@Query() { projectId }: GetManyEpicsQuery, @User() { userId }: UserSession) {
     return this.epicService.getManyEpic(projectId, userId);
+  }
+
+  @Delete(':id')
+  @Scopes(PermissionScopes.WriteEpic)
+  @ApiOkResponse({ type: EpicEntity })
+  deleteEpic(
+    @User() { userId }: UserSession,
+    @Param('id') epicId: number,
+  ) {
+    return this.epicService.deleteEpic(epicId, userId);
   }
 }

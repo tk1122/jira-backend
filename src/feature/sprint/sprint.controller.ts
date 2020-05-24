@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiUseTags } from '@nestjs/swagger';
 import { Scopes } from '../../shared/decorator/scopes.decorator';
 import { PermissionScopes } from '../user/entity/permission.entity';
@@ -9,6 +9,7 @@ import { SprintService } from './sprint.service';
 import { UpdateSprintBody } from './dto/update-sprint.dto';
 import { GetManySprintQuery } from './dto/get-sprint.dto';
 import { SprintEntity } from './entity/sprint.entity';
+import { EpicEntity } from '../epic/entity/epic.entity';
 
 @Controller('sprints')
 @ApiUseTags('sprints')
@@ -55,5 +56,15 @@ export class SprintController {
   @ApiOkResponse({ type: SprintEntity, isArray: true })
   getManySprints(@Query() { projectId }: GetManySprintQuery, @User() { userId }: UserSession) {
     return this.sprintService.getManySprints(projectId, userId);
+  }
+
+  @Delete(':id')
+  @Scopes(PermissionScopes.WriteSprint)
+  @ApiOkResponse({ type: SprintEntity })
+  deleteSprint(
+    @User() { userId }: UserSession,
+    @Param('id') sprintId: number,
+  ) {
+    return this.sprintService.deleteSprint(sprintId, userId);
   }
 }

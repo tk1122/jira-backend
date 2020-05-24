@@ -80,4 +80,16 @@ export class EpicService {
 
     return this.epicRepo.find({ project });
   }
+
+  async deleteEpic(epicId: number, userId: number) {
+    const epic = await this.getEpicByIdOrFail(epicId);
+
+    const project = await this.projectService.getProjectByIdOrFail(epic.projectId);
+
+    if (!this.projectService.isPMOfProject(userId, project)) {
+      throw new UnauthorizedException('You cannot delete this epic');
+    }
+
+    return this.epicRepo.remove(epic);
+  }
 }

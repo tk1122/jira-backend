@@ -26,6 +26,8 @@ export enum IssueType {
   Bug,
 }
 
+export type IssueEntityType = 3;
+
 @Entity('issue')
 export class IssueEntity extends DefaultEntity {
   @ApiResponseModelProperty()
@@ -61,7 +63,7 @@ export class IssueEntity extends DefaultEntity {
     u => u.assignedIssues,
   )
   @JoinColumn({ name: 'assignee_id' })
-  assignee: UserEntity;
+  assignee?: UserEntity;
 
   @Column({ name: 'assignee_id' })
   @ApiResponseModelProperty()
@@ -72,7 +74,7 @@ export class IssueEntity extends DefaultEntity {
     u => u.reportedIssues,
   )
   @JoinColumn({ name: 'reporter_id' })
-  reporter: UserEntity;
+  reporter?: UserEntity;
 
   @Column({ name: 'reporter_id' })
   @ApiResponseModelProperty()
@@ -83,7 +85,7 @@ export class IssueEntity extends DefaultEntity {
     p => p.issues,
   )
   @JoinColumn({ name: 'project_id' })
-  project: ProjectEntity;
+  project?: ProjectEntity;
 
   @Column({ name: 'project_id' })
   @ApiResponseModelProperty()
@@ -92,26 +94,26 @@ export class IssueEntity extends DefaultEntity {
   @ManyToOne(
     () => EpicEntity,
     e => e.issues,
-    { nullable: true },
+    { nullable: true, onDelete: 'SET NULL' },
   )
   @JoinColumn({ name: 'epic_id' })
-  epic?: EpicEntity;
+  epic?: EpicEntity | null;
 
   @Column({ name: 'epic_id', nullable: true })
   @ApiResponseModelProperty()
-  epicId?: number;
+  epicId: number | null;
 
   @ManyToOne(
     () => SprintEntity,
     s => s.issues,
-    { nullable: true },
+    { nullable: true, onDelete: 'SET NULL' },
   )
   @JoinColumn({ name: 'sprint_id' })
-  sprint?: SprintEntity;
+  sprint?: SprintEntity | null;
 
   @Column({ name: 'sprint_id', nullable: true })
   @ApiResponseModelProperty()
-  sprintId?: number;
+  sprintId: number | null;
 
   @ManyToMany(() => LabelEntity)
   @JoinTable({
@@ -119,7 +121,7 @@ export class IssueEntity extends DefaultEntity {
     joinColumn: { name: 'issue_id' },
     inverseJoinColumn: { name: 'label_id' },
   })
-  labels: LabelEntity[];
+  labels?: LabelEntity[];
 
   @ApiResponseModelProperty()
   @RelationId((issue: IssueEntity) => issue.labels)
@@ -131,9 +133,9 @@ export class IssueEntity extends DefaultEntity {
     assigneeId: number,
     reporterId: number,
     projectId: number,
+    labels?: LabelEntity[],
     epicId?: number,
     sprintId?: number,
-    labelIds?: number[],
     storyPoint?: number,
     priority?: IssuePriority,
     type?: IssueType,
@@ -142,17 +144,15 @@ export class IssueEntity extends DefaultEntity {
 
     this.name = name;
     this.description = description;
-    this.assigneeId = assigneeId;
+    this.assigneeId = assigneeId
     this.reporterId = reporterId;
     this.projectId = projectId;
 
-    this.epicId = epicId;
-    this.sprintId = sprintId;
-    if (labelIds) {
-      this.labelIds = labelIds;
-    }
+    this.labels = labels ?? undefined;
+    this.epicId = epicId ?? null;
+    this.sprintId = sprintId ?? null;
 
-    this.storyPoint = storyPoint ?? 0;
+    this.storyPoint = storyPoint ?? 1;
     this.priority = priority ?? IssuePriority.Medium;
     this.type = type ?? IssueType.Task;
 
@@ -160,5 +160,3 @@ export class IssueEntity extends DefaultEntity {
     this.entityType = 3;
   }
 }
-
-export type IssueEntityType = 3;
