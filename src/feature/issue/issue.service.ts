@@ -133,11 +133,9 @@ export class IssueService {
       throw new UnauthorizedException('Cannot add label to this issue');
     }
 
-    const issue = await this.issueRepo.save(
-      new IssueEntity(name, description, assignee, reporter, project, labels, epic, sprint, storyPoint, priority, type),
+    return this.issueRepo.save(
+      new IssueEntity(name, description, assignee.id, reporter.id, project.id, labels, epic?.id, sprint?.id, storyPoint, priority, type),
     );
-
-    return this.issueRepo.findOne({ id: issue.id });
   }
 
   async updateIssue(
@@ -157,8 +155,6 @@ export class IssueService {
     const issue = await this.getIssueByIdOrFail(issueId);
 
     const project = await this.projectService.getProjectByIdOrFail(issue.projectId);
-
-    console.log(issue);
 
     if (!this.projectService.isLeaderOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot update this issue');
@@ -200,7 +196,7 @@ export class IssueService {
       ) {
         throw new BadRequestException('Assignee is not a member of this project');
       }
-      issue.assignee = assignee;
+      issue.assigneeId = assignee.id;
     }
 
     if (reporter !== undefined) {
@@ -211,15 +207,14 @@ export class IssueService {
       ) {
         throw new BadRequestException('Reporter is not a member of this project');
       }
-      issue.reporter = reporter;
+      issue.reporterId = reporter.id;
     }
 
     if (epic !== undefined) {
       if (epic !== null && epic.projectId !== project.id) {
         throw new BadRequestException('Epic not belong to project');
       }
-
-      issue.epic = epic;
+      issue.epicId = epic?.id ?? null;
     }
 
     if (sprint !== undefined) {
@@ -227,7 +222,7 @@ export class IssueService {
         throw new BadRequestException('Sprint not belong to project');
       }
 
-      issue.sprint = sprint;
+      issue.sprintId = sprint?.id ?? null;
     }
 
     if (labels !== undefined) {
@@ -238,9 +233,7 @@ export class IssueService {
       issue.labels = labels;
     }
 
-    await this.issueRepo.save(issue);
-
-    return this.issueRepo.findOneOrFail(issue.id);
+    return this.issueRepo.save(issue);
   }
 
   async updateIssueStatus(issueId: number, userId: number, status: IssueStatus) {
