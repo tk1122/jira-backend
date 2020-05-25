@@ -55,14 +55,19 @@ export class IssueService {
     return this.labelRepo.find({ project });
   }
 
-  async getManyIssues(projectId: number, userId: number) {
-    const project = await this.projectService.getProjectByIdOrFail(projectId);
+  async getManyIssues(userId: number, projectId?: number) {
+    if (projectId !== undefined) {
+      const project = await this.projectService.getProjectByIdOrFail(projectId);
 
-    if (!this.projectService.isMemberOfProject(userId, project)) {
-      throw new UnauthorizedException('You cannot get issues of this project');
+      if (!this.projectService.isMemberOfProject(userId, project)) {
+        throw new UnauthorizedException('You cannot get issues of this project');
+      }
+
+      return this.issueRepo.find({ project });
     }
 
-    return this.issueRepo.find({ project });
+    return this.issueRepo.find({assigneeId: userId})
+
   }
 
   async getOneIssue(issueId: number, userId: number) {
