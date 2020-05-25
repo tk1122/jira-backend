@@ -26,17 +26,17 @@ export class UserController {
     return this.userService.getUsers(getUsersQuery.username, getUsersQuery.page, getUsersQuery.limit, !user.isAdmin);
   }
 
+  @Get('roles')
+  @Scopes(PermissionScopes.ReadRole)
+  async getRoles() {
+    return this.userService.getRoles();
+  }
+
   @Get(':id')
   @Scopes(PermissionScopes.ReadUser)
   @ApiOkResponse({ type: UserEntity })
   async getOneUser(@Param('id') userId: number) {
     return this.userService.getOneUser(userId);
-  }
-
-  @Get('roles')
-  @Scopes(PermissionScopes.ReadRole)
-  async getRoles() {
-    return this.userService.getRoles();
   }
 
   @Put(':id/roles')
