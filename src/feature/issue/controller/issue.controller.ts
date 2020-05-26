@@ -50,7 +50,7 @@ export class IssueController {
   @Scopes(PermissionScopes.ReadIssue)
   @ApiOkResponse({ type: IssueEntity, isArray: true })
   getManyIssue(@Query() { projectId }: GetManyIssueQuery, @User() { userId }: UserSession) {
-    return this.issueService.getManyIssues(projectId, userId);
+    return this.issueService.getManyIssues(userId, projectId);
   }
 
   @Put(':id')
