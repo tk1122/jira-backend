@@ -19,7 +19,8 @@ export class UserService implements OnApplicationBootstrap {
     @InjectRepository(PermissionEntity)
     private readonly permissionRepo: Repository<PermissionEntity>,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+  }
 
   async onApplicationBootstrap() {
     await this.initPermissions();
@@ -93,25 +94,6 @@ export class UserService implements OnApplicationBootstrap {
       .getOne();
   }
 
-  async setRole(userId: number, roleIds: number[]) {
-    const [roles, user] = await Promise.all([
-      this.roleRepo
-        .createQueryBuilder('r')
-        .where('r.id IN (:...roleIds)', { roleIds })
-        .getMany(),
-
-      this.userRepo.findOne({ id: userId }),
-    ]);
-
-    if (user && roles && roles.length > 0) {
-      user.roles = roles;
-
-      return this.userRepo.save(user);
-    }
-
-    throw new BadRequestException('User or role not found');
-  }
-
   async getUsers(username: string = '', page: number = 1, limit: number = 10, fetchOnlyActiveUsers = true) {
     const getUsersQuery = this.userRepo
       .createQueryBuilder('u')
@@ -128,21 +110,7 @@ export class UserService implements OnApplicationBootstrap {
   }
 
   async getRoles() {
-    return this.roleRepo.find();
-  }
-
-  async updateUser(userId: number, userInfo: Pick<UserEntity, 'status' | 'skill' | 'level'>) {
-    const user = await this.userRepo.findOne({ id: userId });
-
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-
-    user.status = userInfo.status;
-    user.skill = userInfo.skill;
-    user.level = userInfo.level;
-
-    return this.userRepo.save(user);
+    return this.roleRepo.find({ name: Not(Roles.Admin) });
   }
 
   async getOneUser(userId: number) {
@@ -152,6 +120,35 @@ export class UserService implements OnApplicationBootstrap {
     }
 
     return user;
+  }
+
+  async updateUser(
+    userId: number,
+    roleIds: number[] | undefined,
+    status: UserStatus | null | undefined,
+    skill: string | null | undefined,
+    level: string | null | undefined,
+  ) {
+    const user = await this.getUserByIdOrFail(userId);
+
+    user.status = status ?? user.status;
+    user.skill = skill ?? user.skill;
+    user.level = level ?? user.level;
+
+    const roles = roleIds
+      ? await this.roleRepo
+        .createQueryBuilder('r')
+        .select(['r'])
+        .where('r.id IN (:...roleIds)', { roleIds })
+        .andWhere('r.name != :adminRole', { adminRole: Roles.Admin })
+        .getMany()
+      : undefined;
+
+    if (roles) {
+      user.roles = roles;
+    }
+
+    return this.userRepo.save(user);
   }
 
   private async initAdmin() {
