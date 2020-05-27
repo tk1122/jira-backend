@@ -195,6 +195,7 @@ export class UserService implements OnApplicationBootstrap {
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadSprint } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadIssue } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadUser } }),
+          this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadRole } }),
         ])
       ).filter((permission): permission is Required<PermissionEntity> => permission != undefined);
 
@@ -207,6 +208,7 @@ export class UserService implements OnApplicationBootstrap {
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadProject } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadUser } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadEpic } }),
+          this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadRole } }),
         ])
       ).filter((permission): permission is Required<PermissionEntity> => permission != undefined);
 
@@ -218,10 +220,11 @@ export class UserService implements OnApplicationBootstrap {
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadProject } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadUser } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadEpic } }),
+          this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadRole } }),
         ])
       ).filter((permission): permission is Required<PermissionEntity> => permission != undefined);
 
-      const a = await Promise.all([
+      await Promise.all([
         this.roleRepo.save({ name: Roles.Admin, permissions: adminPermission }),
         this.roleRepo.save({ name: Roles.PM, permissions: pmPermissions }),
         this.roleRepo.save({ name: Roles.Leader, permissions: leaderPermissions }),
