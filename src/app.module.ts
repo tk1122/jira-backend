@@ -16,6 +16,7 @@ import { SprintEntity } from './feature/sprint/entity/sprint.entity';
 import { IssueEntity } from './feature/issue/entity/issue.entity';
 import { LabelEntity } from './feature/issue/entity/label.entity';
 import { IssueModule } from './feature/issue/issue.module';
+import { NotificationModule } from './feature/notification/notification.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { IssueModule } from './feature/issue/issue.module';
     SprintModule,
     EpicModule,
     IssueModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}

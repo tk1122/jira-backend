@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
 import { ApiResponseModelProperty } from '@nestjs/swagger';
@@ -32,7 +32,7 @@ export class SprintEntity extends DefaultEntity {
 
   @ApiResponseModelProperty()
   @Column({ type: 'tinyint', name: 'entity_type' })
-  entityType: SprintEntityType;
+  entityType: typeof SprintEntityType;
 
   @ManyToOne(
     () => ProjectEntity,
@@ -69,4 +69,4 @@ export enum SprintStatus {
   Finished,
 }
 
-export type SprintEntityType = 2;
+export const SprintEntityType = 2;

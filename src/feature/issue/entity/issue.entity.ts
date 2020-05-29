@@ -26,7 +26,7 @@ export enum IssueType {
   Bug,
 }
 
-export type IssueEntityType = 3;
+export const IssueEntityType = 3;
 
 @Entity('issue')
 export class IssueEntity extends DefaultEntity {
@@ -40,7 +40,7 @@ export class IssueEntity extends DefaultEntity {
 
   @Column({ name: 'entity_type', type: 'tinyint' })
   @ApiResponseModelProperty()
-  entityType: IssueEntityType;
+  entityType: typeof IssueEntityType;
 
   @Column({ name: 'story_point' })
   @ApiResponseModelProperty()
@@ -144,7 +144,7 @@ export class IssueEntity extends DefaultEntity {
 
     this.name = name;
     this.description = description;
-    this.assigneeId = assigneeId
+    this.assigneeId = assigneeId;
     this.reporterId = reporterId;
     this.projectId = projectId;
 

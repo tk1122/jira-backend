@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { DefaultEntity } from '../../../shared/interface/default.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
 import { IssueEntity } from '../../issue/entity/issue.entity';
@@ -24,7 +24,7 @@ export class EpicEntity extends DefaultEntity {
 
   @ApiResponseModelProperty()
   @Column({ name: 'entity_type', type: 'tinyint' })
-  entityType: EpicEntityType;
+  entityType: typeof EpicEntityType;
 
   @ManyToOne(
     () => ProjectEntity,
@@ -54,4 +54,4 @@ export class EpicEntity extends DefaultEntity {
   }
 }
 
-export type EpicEntityType = 1;
+export const EpicEntityType = 1;
