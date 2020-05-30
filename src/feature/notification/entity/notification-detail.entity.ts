@@ -6,10 +6,14 @@ import { IssueEntityType } from '../../issue/entity/issue.entity';
 export enum NotifEventType {
   Created,
   Updated,
-  Added,
-  Removed,
+  AddedToProject,
+  RemovedFromProject,
   IssueStatusChanged,
+  StartSprint,
+  FinishSprint,
   Assigned,
+  AssigneeRemoved,
+  ReporterRemoved,
   Reported,
   Deleted,
 }
@@ -20,7 +24,7 @@ export interface Notification {
   entityId: number;
   entityType: EntityType;
   createdAt: Date;
-  status: NotifStatus
+  status: NotifStatus;
 }
 
 export type EntityType = typeof IssueEntityType | typeof ProjectEntityType | typeof EpicEntityType | typeof SprintEntityType;

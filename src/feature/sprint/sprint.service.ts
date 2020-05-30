@@ -1,14 +1,21 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SprintEntity, SprintStatus } from './entity/sprint.entity';
+import { SprintEntity, SprintEntityType, SprintStatus } from './entity/sprint.entity';
 import { Repository } from 'typeorm';
 import { ProjectService } from '../project/project.service';
+import { UserService } from '../user/user.service';
+import { UserEntity } from '../user/entity/user.entity';
+import { NotificationService } from '../notification/notification.service';
+import { NotifEventType } from '../notification/entity/notification-detail.entity';
 
 @Injectable()
 export class SprintService {
   constructor(
     @InjectRepository(SprintEntity) private readonly sprintRepo: Repository<SprintEntity>,
+    @InjectRepository(UserEntity) private readonly userRepo: Repository<UserEntity>,
     private readonly projectService: ProjectService,
+    private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async getSprintByIdOrFail(sprintId: number) {
@@ -60,14 +67,25 @@ export class SprintService {
       throw new BadRequestException('This sprint is not currently waiting to start');
     }
 
-    const otherSprintsOfProjects = await this.sprintRepo.find({ projectId: sprint.projectId });
+    const [otherSprintsOfProjects, project] = await Promise.all([
+      this.sprintRepo.find({ projectId: sprint.projectId }),
+      this.projectService.getProjectByIdOrFail(sprint.projectId),
+    ]);
 
     if (otherSprintsOfProjects.map(s => s.status).includes(SprintStatus.InProgress)) {
       throw new BadRequestException('Each project has only one active sprint');
     }
 
+    const [leader, members, pm] = await Promise.all([
+      this.userService.getUserByIdOrFail(project.leaderId),
+      this.userRepo.findByIds(project.memberIds),
+      this.userService.getUserByIdOrFail(project.pmId),
+    ]);
+
     sprint.startTime = new Date();
     sprint.status = SprintStatus.InProgress;
+
+    this.notificationService.createNotifications(leader, [pm, ...members], sprint.id, SprintEntityType, NotifEventType.StartSprint).then();
 
     return this.sprintRepo.save(sprint);
   }
@@ -79,12 +97,22 @@ export class SprintService {
       throw new BadRequestException('You cannot finish this sprint');
     }
 
-    if (sprint.status !== SprintStatus.Pending) {
+    if (sprint.status !== SprintStatus.InProgress) {
       throw new BadRequestException('This sprint is not currently active');
     }
 
+    const project = await this.projectService.getProjectByIdOrFail(sprint.projectId);
+
+    const [leader, members, pm] = await Promise.all([
+      this.userService.getUserByIdOrFail(project.leaderId),
+      this.userRepo.findByIds(project.memberIds),
+      this.userService.getUserByIdOrFail(project.pmId),
+    ]);
+
     sprint.finishTime = new Date();
     sprint.status = SprintStatus.Finished;
+
+    this.notificationService.createNotifications(leader, [pm, ...members], sprint.id, SprintEntityType, NotifEventType.FinishSprint).then();
 
     return this.sprintRepo.save(sprint);
   }

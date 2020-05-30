@@ -54,8 +54,12 @@ export class NotificationService {
     switch (eventType) {
       case NotifEventType.Assigned:
       case NotifEventType.Reported:
-      case NotifEventType.Added:
-      case NotifEventType.Removed:
+      case NotifEventType.AddedToProject:
+      case NotifEventType.RemovedFromProject:
+      case NotifEventType.StartSprint:
+      case NotifEventType.FinishSprint:
+      case NotifEventType.AssigneeRemoved:
+      case NotifEventType.ReporterRemoved:
         return `${this.createProducerPart(producer)}${this.createActionPart(eventType)}`;
       case NotifEventType.IssueStatusChanged:
         return `${this.createProducerPart(producer)}${this.createActionPart(eventType)}${this.createIssueStatusPart(
@@ -80,15 +84,23 @@ export class NotificationService {
       case NotifEventType.Updated:
         return 'updated ';
       case NotifEventType.IssueStatusChanged:
-        return 'changed an issue';
+        return 'changed an issue ';
       case NotifEventType.Assigned:
         return 'assigned an issue to you ';
       case NotifEventType.Reported:
         return 'made you the reporter of an issue ';
-      case NotifEventType.Added:
+      case NotifEventType.AddedToProject:
         return 'added you to a project ';
-      case NotifEventType.Removed:
-        return 'removed you from a project '
+      case NotifEventType.RemovedFromProject:
+        return 'removed you from a project ';
+      case NotifEventType.StartSprint:
+        return 'started a sprint ';
+      case NotifEventType.FinishSprint:
+        return 'finished a sprint ';
+      case NotifEventType.AssigneeRemoved:
+        return 'dismissed you as the assginee of an issue ';
+      case NotifEventType.ReporterRemoved:
+        return 'dimissed you as the repoter of an issue ';
     }
   }
 

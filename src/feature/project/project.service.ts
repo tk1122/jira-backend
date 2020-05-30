@@ -56,7 +56,7 @@ export class ProjectService {
 
     const project = await this.projectRepo.save(new ProjectEntity(name, description, { id: pmId } as UserEntity, leader));
 
-    this.notifService.createNotifications(pm!, [leader], project.id, ProjectEntityType, NotifEventType.Added).then();
+    this.notifService.createNotifications(pm!, [leader], project.id, ProjectEntityType, NotifEventType.AddedToProject).then();
 
     return project;
   }
@@ -85,8 +85,8 @@ export class ProjectService {
 
     if (leader) {
       if (leader.id !== oldLeader.id) {
-        this.notifService.createNotifications(pm, [oldLeader], project.id, ProjectEntityType, NotifEventType.Removed).then();
-        this.notifService.createNotifications(pm, [leader], project.id, ProjectEntityType, NotifEventType.Added).then();
+        this.notifService.createNotifications(pm, [oldLeader], project.id, ProjectEntityType, NotifEventType.RemovedFromProject).then();
+        this.notifService.createNotifications(pm, [leader], project.id, ProjectEntityType, NotifEventType.AddedToProject).then();
       }
 
       project.leader = leader;
@@ -97,10 +97,10 @@ export class ProjectService {
       const memberIds = members.map(m => m.id);
 
       const newMembers = members.filter(m => !oldMemberIds.includes(m.id));
-      this.notifService.createNotifications(pm, newMembers, project.id, ProjectEntityType, NotifEventType.Added).then();
+      this.notifService.createNotifications(pm, newMembers, project.id, ProjectEntityType, NotifEventType.AddedToProject).then();
 
       const removedMembers = oldMembers.filter(m => !memberIds.includes(m.id));
-      this.notifService.createNotifications(pm, removedMembers, project.id, ProjectEntityType, NotifEventType.Removed).then();
+      this.notifService.createNotifications(pm, removedMembers, project.id, ProjectEntityType, NotifEventType.RemovedFromProject).then();
 
       project.members = members;
     }
