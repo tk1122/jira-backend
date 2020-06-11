@@ -43,7 +43,7 @@ export class EpicService {
 
     const epic = await this.epicRepo.save(new EpicEntity(name, description, startDate, endDate, projectId));
 
-    this.notifService.createNotifications(pm, [leader, ...members], epic.id, EpicEntityType, NotifEventType.Created);
+    this.notifService.createNotifications(pm, [leader, ...members], epic.id, EpicEntityType, epic.name, NotifEventType.Created);
 
     return epic;
   }
@@ -85,7 +85,7 @@ export class EpicService {
     }
 
     if (isEpicUpdated) {
-      this.notifService.createNotifications(pm, [leader, ...members], epic.id, EpicEntityType, NotifEventType.Updated).then();
+      this.notifService.createNotifications(pm, [leader, ...members], epic.id, EpicEntityType, epic.name, NotifEventType.Updated).then();
     }
 
     return this.epicRepo.save(epic);
@@ -127,7 +127,7 @@ export class EpicService {
       this.userRepo.findByIds(project.memberIds),
     ]);
 
-    this.notifService.createNotifications(pm, [leader, ...members], epic.id, EpicEntityType, NotifEventType.Deleted).then();
+    this.notifService.createNotifications(pm, [leader, ...members], epic.id, EpicEntityType, epic.name, NotifEventType.Deleted).then();
 
     return this.epicRepo.remove(epic);
   }

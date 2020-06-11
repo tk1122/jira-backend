@@ -147,8 +147,8 @@ export class IssueService {
       new IssueEntity(name, description, assignee.id, reporter.id, project.id, labels, epic?.id, sprint?.id, storyPoint, priority, type),
     );
 
-    this.notificationService.createNotifications(leader, [assignee], issue.id, IssueEntityType, NotifEventType.Assigned).then();
-    this.notificationService.createNotifications(leader, [reporter], issue.id, IssueEntityType, NotifEventType.Reported).then();
+    this.notificationService.createNotifications(leader, [assignee], issue.id, IssueEntityType, issue.name, NotifEventType.Assigned).then();
+    this.notificationService.createNotifications(leader, [reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Reported).then();
 
     return issue;
   }
@@ -221,9 +221,9 @@ export class IssueService {
         throw new BadRequestException('Assignee is not a member of this project');
       }
       if (assignee.id !== oldAssignee.id) {
-        this.notificationService.createNotifications(leader, [assignee], issue.id, IssueEntityType, NotifEventType.Assigned).then();
+        this.notificationService.createNotifications(leader, [assignee], issue.id, IssueEntityType, issue.name, NotifEventType.Assigned).then();
         this.notificationService
-          .createNotifications(leader, [oldAssignee], issue.id, IssueEntityType, NotifEventType.AssigneeRemoved)
+          .createNotifications(leader, [oldAssignee], issue.id, IssueEntityType, issue.name, NotifEventType.AssigneeRemoved)
           .then();
       }
       issue.assigneeId = assignee.id;
@@ -238,9 +238,9 @@ export class IssueService {
         throw new BadRequestException('Reporter is not a member of this project');
       }
       if (reporter.id !== oldReporter.id) {
-        this.notificationService.createNotifications(leader, [reporter], issue.id, IssueEntityType, NotifEventType.Reported).then();
+        this.notificationService.createNotifications(leader, [reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Reported).then();
         this.notificationService
-          .createNotifications(leader, [oldReporter], issue.id, IssueEntityType, NotifEventType.ReporterRemoved)
+          .createNotifications(leader, [oldReporter], issue.id, IssueEntityType, issue.name, NotifEventType.ReporterRemoved)
           .then();
       }
       issue.reporterId = reporter.id;
@@ -277,7 +277,7 @@ export class IssueService {
       const assigneeAndReporter = [];
       assigneeAndReporter.push(assignee ?? oldAssignee);
       assigneeAndReporter.push(reporter ?? oldReporter);
-      this.notificationService.createNotifications(leader, assigneeAndReporter, issue.id, IssueEntityType, NotifEventType.Updated).then();
+      this.notificationService.createNotifications(leader, assigneeAndReporter, issue.id, IssueEntityType, issue.name, NotifEventType.Updated).then();
     }
 
     return this.issueRepo.save(issue);
@@ -303,6 +303,7 @@ export class IssueService {
         [leader, reporter],
         issue.id,
         IssueEntityType,
+        issue.name,
         NotifEventType.IssueStatusChanged,
         issue.status,
         status,
@@ -326,7 +327,7 @@ export class IssueService {
       throw new UnauthorizedException('You cannnot delete this issue');
     }
 
-    this.notificationService.createNotifications(leader, [assignee, reporter], issue.id, IssueEntityType, NotifEventType.Deleted).then();
+    this.notificationService.createNotifications(leader, [assignee, reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Deleted).then();
 
     return this.issueRepo.remove(issue);
   }

@@ -24,6 +24,7 @@ export class NotificationService {
     consumers: UserEntity[],
     entityId: number,
     entityType: EntityType,
+    entityName: string,
     eventType: NotifEventType,
     issueStatusFrom?: IssueStatus,
     issueStatusTo?: IssueStatus,
@@ -36,8 +37,9 @@ export class NotificationService {
         message: this.createNotificationMessage(producer, eventType, entityType, issueStatusFrom, issueStatusTo),
         entityId,
         entityType,
+        entityName,
         createdAt: new Date(),
-        status: NotifStatus.Unread,
+        status: NotifStatus.Pending,
       };
 
       await userRef.add(noti);
@@ -119,5 +121,15 @@ export class NotificationService {
       case 3:
         return 'an issue ';
     }
+  }
+
+  async markAsReceived(userId: number) {
+    const userRef = this.store.collection(userId.toString());
+
+    userRef.listDocuments().then(async docs => {
+      docs.forEach(async doc => {
+        await doc.update({status: NotifStatus.Unread})
+      })
+    })
   }
 }

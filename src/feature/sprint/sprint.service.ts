@@ -85,7 +85,7 @@ export class SprintService {
     sprint.startTime = new Date();
     sprint.status = SprintStatus.InProgress;
 
-    this.notificationService.createNotifications(leader, [pm, ...members], sprint.id, SprintEntityType, NotifEventType.StartSprint).then();
+    this.notificationService.createNotifications(leader, [pm, ...members], sprint.id, SprintEntityType, sprint.name, NotifEventType.StartSprint).then();
 
     return this.sprintRepo.save(sprint);
   }
@@ -112,7 +112,7 @@ export class SprintService {
     sprint.finishTime = new Date();
     sprint.status = SprintStatus.Finished;
 
-    this.notificationService.createNotifications(leader, [pm, ...members], sprint.id, SprintEntityType, NotifEventType.FinishSprint).then();
+    this.notificationService.createNotifications(leader, [pm, ...members], sprint.id, SprintEntityType, sprint.name, NotifEventType.FinishSprint).then();
 
     return this.sprintRepo.save(sprint);
   }
