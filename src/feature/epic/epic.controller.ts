@@ -50,10 +50,7 @@ export class EpicController {
   @Delete(':id')
   @Scopes(PermissionScopes.WriteEpic)
   @ApiOkResponse({ type: EpicEntity })
-  deleteEpic(
-    @User() { userId }: UserSession,
-    @Param('id') epicId: number,
-  ) {
+  deleteEpic(@User() { userId }: UserSession, @Param('id') epicId: number) {
     return this.epicService.deleteEpic(epicId, userId);
   }
 }

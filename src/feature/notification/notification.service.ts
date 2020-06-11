@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityType, NotifEventType, Notification, NotifStatus } from './entity/notification-detail.entity';
 import { IssueStatus } from '../issue/entity/issue.entity';
 import * as FBAdmin from 'firebase-admin';
@@ -44,6 +44,74 @@ export class NotificationService {
 
       await userRef.add(noti);
     });
+  }
+
+  markAsReceivedMany(userId: number) {
+    const userRef = this.store.collection(userId.toString());
+    const batch = this.store.batch();
+
+    return userRef
+      .where('status', '==', NotifStatus.Pending)
+      .get()
+      .then(qs => {
+        qs.forEach(ds => {
+          batch.update(ds.ref, { status: NotifStatus.Unread });
+        });
+
+        return batch
+          .commit()
+          .then(() => ({ success: true }))
+          .catch(() => ({ success: false }));
+      });
+  }
+
+  markAsReadMany(userId: number) {
+    const userRef = this.store.collection(userId.toString());
+    const batch = this.store.batch();
+
+    return userRef
+      .where('status', 'in', [NotifStatus.Pending, NotifStatus.Unread])
+      .get()
+      .then(qs => {
+        qs.forEach(ds => {
+          batch.update(ds.ref, { status: NotifStatus.Read });
+        });
+
+        return batch
+          .commit()
+          .then(() => ({ success: true }))
+          .catch(() => ({ success: false }));
+      });
+  }
+
+  async markAsReadOne(userId: number, notifId: string) {
+    const notifRef = this.store.collection(userId.toString()).doc(notifId);
+
+    const notif = await notifRef.get();
+
+    if (!notif.exists) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    return notifRef
+      .update({ status: NotifStatus.Read })
+      .then(() => ({ success: true }))
+      .catch(() => ({ success: false }));
+  }
+
+  async deleteOneNotif(userId: number, notifId: string) {
+    const notifRef = this.store.collection(userId.toString()).doc(notifId);
+
+    const notif = await notifRef.get();
+
+    if (!notif.exists) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    return notifRef
+      .delete()
+      .then(() => ({ success: true }))
+      .catch(() => ({ success: false }));
   }
 
   private createNotificationMessage(
@@ -121,15 +189,5 @@ export class NotificationService {
       case 3:
         return 'an issue ';
     }
-  }
-
-  async markAsReceived(userId: number) {
-    const userRef = this.store.collection(userId.toString());
-
-    userRef.listDocuments().then(async docs => {
-      docs.forEach(async doc => {
-        await doc.update({status: NotifStatus.Unread})
-      })
-    })
   }
 }

@@ -58,7 +58,7 @@ export class ProjectController {
 
   @Delete(':id')
   @Scopes(PermissionScopes.WriteProject)
-  async deleteProject(@Param('id') projectId: number, @User() {userId}: UserSession) {
-    return this.projectService.deleteProject(projectId, userId)
+  async deleteProject(@Param('id') projectId: number, @User() { userId }: UserSession) {
+    return this.projectService.deleteProject(projectId, userId);
   }
 }

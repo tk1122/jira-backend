@@ -23,7 +23,7 @@ export interface Notification {
   message: string;
   entityId: number;
   entityType: EntityType;
-  enittyName: string;
+  entityName: string;
   createdAt: Date;
   status: NotifStatus;
 }
@@ -33,5 +33,5 @@ export type EntityType = typeof IssueEntityType | typeof ProjectEntityType | typ
 export enum NotifStatus {
   Pending,
   Unread,
-  Read
+  Read,
 }

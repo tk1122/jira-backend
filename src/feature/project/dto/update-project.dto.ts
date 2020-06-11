@@ -4,7 +4,7 @@ import { ProjectStatus } from '../entity/project.entity';
 
 export class UpdateProjectBody {
   @ApiModelProperty()
-  @IsInt({each: true})
+  @IsInt({ each: true })
   @ValidateIf((o: UpdateProjectBody) => o.memberIds !== undefined)
   @IsArray()
   memberIds?: number[];

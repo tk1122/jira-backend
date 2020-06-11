@@ -221,7 +221,9 @@ export class IssueService {
         throw new BadRequestException('Assignee is not a member of this project');
       }
       if (assignee.id !== oldAssignee.id) {
-        this.notificationService.createNotifications(leader, [assignee], issue.id, IssueEntityType, issue.name, NotifEventType.Assigned).then();
+        this.notificationService
+          .createNotifications(leader, [assignee], issue.id, IssueEntityType, issue.name, NotifEventType.Assigned)
+          .then();
         this.notificationService
           .createNotifications(leader, [oldAssignee], issue.id, IssueEntityType, issue.name, NotifEventType.AssigneeRemoved)
           .then();
@@ -238,7 +240,9 @@ export class IssueService {
         throw new BadRequestException('Reporter is not a member of this project');
       }
       if (reporter.id !== oldReporter.id) {
-        this.notificationService.createNotifications(leader, [reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Reported).then();
+        this.notificationService
+          .createNotifications(leader, [reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Reported)
+          .then();
         this.notificationService
           .createNotifications(leader, [oldReporter], issue.id, IssueEntityType, issue.name, NotifEventType.ReporterRemoved)
           .then();
@@ -277,7 +281,9 @@ export class IssueService {
       const assigneeAndReporter = [];
       assigneeAndReporter.push(assignee ?? oldAssignee);
       assigneeAndReporter.push(reporter ?? oldReporter);
-      this.notificationService.createNotifications(leader, assigneeAndReporter, issue.id, IssueEntityType, issue.name, NotifEventType.Updated).then();
+      this.notificationService
+        .createNotifications(leader, assigneeAndReporter, issue.id, IssueEntityType, issue.name, NotifEventType.Updated)
+        .then();
     }
 
     return this.issueRepo.save(issue);
@@ -327,7 +333,9 @@ export class IssueService {
       throw new UnauthorizedException('You cannnot delete this issue');
     }
 
-    this.notificationService.createNotifications(leader, [assignee, reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Deleted).then();
+    this.notificationService
+      .createNotifications(leader, [assignee, reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Deleted)
+      .then();
 
     return this.issueRepo.remove(issue);
   }

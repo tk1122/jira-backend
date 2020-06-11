@@ -19,8 +19,7 @@ export class UserService implements OnApplicationBootstrap {
     @InjectRepository(PermissionEntity)
     private readonly permissionRepo: Repository<PermissionEntity>,
     private readonly configService: ConfigService,
-  ) {
-  }
+  ) {}
 
   async onApplicationBootstrap() {
     await this.initPermissions();
@@ -137,11 +136,11 @@ export class UserService implements OnApplicationBootstrap {
 
     const roles = roleIds
       ? await this.roleRepo
-        .createQueryBuilder('r')
-        .select(['r'])
-        .where('r.id IN (:...roleIds)', { roleIds })
-        .andWhere('r.name != :adminRole', { adminRole: Roles.Admin })
-        .getMany()
+          .createQueryBuilder('r')
+          .select(['r'])
+          .where('r.id IN (:...roleIds)', { roleIds })
+          .andWhere('r.name != :adminRole', { adminRole: Roles.Admin })
+          .getMany()
       : undefined;
 
     if (roles) {
