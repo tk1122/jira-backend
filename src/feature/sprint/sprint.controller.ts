@@ -61,10 +61,7 @@ export class SprintController {
   @Delete(':id')
   @Scopes(PermissionScopes.WriteSprint)
   @ApiOkResponse({ type: SprintEntity })
-  deleteSprint(
-    @User() { userId }: UserSession,
-    @Param('id') sprintId: number,
-  ) {
+  deleteSprint(@User() { userId }: UserSession, @Param('id') sprintId: number) {
     return this.sprintService.deleteSprint(sprintId, userId);
   }
 }

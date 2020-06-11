@@ -22,4 +22,5 @@ export enum PermissionScopes {
   WriteSprint = 'write_sprint',
   ReadRole = 'read_role',
   WriteRole = 'write_role',
+  WriteNotification = 'write_notification',
 }

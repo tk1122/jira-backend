@@ -63,5 +63,5 @@ export class UpdateIssueBody {
 export class UpdateIssueStatusBody {
   @ApiModelProperty()
   @IsEnum(IssueStatus)
-  status: IssueStatus
+  status: IssueStatus;
 }

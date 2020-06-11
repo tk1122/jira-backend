@@ -19,8 +19,7 @@ export class UserService implements OnApplicationBootstrap {
     @InjectRepository(PermissionEntity)
     private readonly permissionRepo: Repository<PermissionEntity>,
     private readonly configService: ConfigService,
-  ) {
-  }
+  ) {}
 
   async onApplicationBootstrap() {
     await this.initPermissions();
@@ -137,11 +136,11 @@ export class UserService implements OnApplicationBootstrap {
 
     const roles = roleIds
       ? await this.roleRepo
-        .createQueryBuilder('r')
-        .select(['r'])
-        .where('r.id IN (:...roleIds)', { roleIds })
-        .andWhere('r.name != :adminRole', { adminRole: Roles.Admin })
-        .getMany()
+          .createQueryBuilder('r')
+          .select(['r'])
+          .where('r.id IN (:...roleIds)', { roleIds })
+          .andWhere('r.name != :adminRole', { adminRole: Roles.Admin })
+          .getMany()
       : undefined;
 
     if (roles) {
@@ -195,6 +194,8 @@ export class UserService implements OnApplicationBootstrap {
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadSprint } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadIssue } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadUser } }),
+          this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadRole } }),
+          this.permissionRepo.findOne({ where: { scope: PermissionScopes.WriteNotification } }),
         ])
       ).filter((permission): permission is Required<PermissionEntity> => permission != undefined);
 
@@ -207,6 +208,8 @@ export class UserService implements OnApplicationBootstrap {
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadProject } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadUser } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadEpic } }),
+          this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadRole } }),
+          this.permissionRepo.findOne({ where: { scope: PermissionScopes.WriteNotification } }),
         ])
       ).filter((permission): permission is Required<PermissionEntity> => permission != undefined);
 
@@ -218,10 +221,12 @@ export class UserService implements OnApplicationBootstrap {
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadProject } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadUser } }),
           this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadEpic } }),
+          this.permissionRepo.findOne({ where: { scope: PermissionScopes.ReadRole } }),
+          this.permissionRepo.findOne({ where: { scope: PermissionScopes.WriteNotification } }),
         ])
       ).filter((permission): permission is Required<PermissionEntity> => permission != undefined);
 
-      const a = await Promise.all([
+      await Promise.all([
         this.roleRepo.save({ name: Roles.Admin, permissions: adminPermission }),
         this.roleRepo.save({ name: Roles.PM, permissions: pmPermissions }),
         this.roleRepo.save({ name: Roles.Leader, permissions: leaderPermissions }),

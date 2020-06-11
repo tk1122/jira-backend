@@ -1,4 +1,3 @@
-
 import { ApiModelProperty } from '@nestjs/swagger';
 import { ArrayNotEmpty, IsEnum, IsInt, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { UserStatus } from '../entity/user.entity';
@@ -20,8 +19,8 @@ export class UpdateUserBody {
   status?: UserStatus | null;
 
   @ApiModelProperty()
-  @IsInt({each: true})
+  @IsInt({ each: true })
   @ValidateIf((o: UpdateUserBody) => o.roleIds !== undefined)
   @ArrayNotEmpty()
-  roleIds?: number[]
+  roleIds?: number[];
 }

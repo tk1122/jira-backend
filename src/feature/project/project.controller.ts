@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiUseTags } from '@nestjs/swagger';
 import { CreateProjectBody } from './dto/create-project.dto';
 import { Scopes } from '../../shared/decorator/scopes.decorator';
@@ -48,13 +48,17 @@ export class ProjectController {
 
   @Put(':id')
   @Scopes(PermissionScopes.WriteProject)
-  async updateProject(@Body() updateProjectBody: UpdateProjectBody, @Param('id') projectId: number) {
-    return this.projectService.updateProject(
-      projectId,
-      updateProjectBody.memberIds,
-      updateProjectBody.name,
-      updateProjectBody.description,
-      updateProjectBody.status,
-    );
+  async updateProject(
+    @Body() { leaderId, memberIds, name, description, status }: UpdateProjectBody,
+    @Param('id') projectId: number,
+    @User() { userId }: UserSession,
+  ) {
+    return this.projectService.updateProject(projectId, userId, leaderId, memberIds, name, description, status);
+  }
+
+  @Delete(':id')
+  @Scopes(PermissionScopes.WriteProject)
+  async deleteProject(@Param('id') projectId: number, @User() { userId }: UserSession) {
+    return this.projectService.deleteProject(projectId, userId);
   }
 }

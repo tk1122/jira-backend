@@ -1,12 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IssueEntity, IssuePriority, IssueType, IssueStatus } from './entity/issue.entity';
+import { IssueEntity, IssueEntityType, IssuePriority, IssueStatus, IssueType } from './entity/issue.entity';
 import { Repository } from 'typeorm';
 import { LabelEntity } from './entity/label.entity';
 import { ProjectService } from '../project/project.service';
 import { SprintService } from '../sprint/sprint.service';
 import { EpicService } from '../epic/epic.service';
 import { UserService } from '../user/user.service';
+import { NotificationService } from '../notification/notification.service';
+import { NotifEventType } from '../notification/entity/notification-detail.entity';
 
 @Injectable()
 export class IssueService {
@@ -19,6 +21,7 @@ export class IssueService {
     private readonly sprintService: SprintService,
     private readonly epicService: EpicService,
     private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async getIssueByIdOrFail(issueId: number) {
@@ -66,8 +69,7 @@ export class IssueService {
       return this.issueRepo.find({ project });
     }
 
-    return this.issueRepo.find({assigneeId: userId})
-
+    return this.issueRepo.find({ assigneeId: userId });
   }
 
   async getOneIssue(issueId: number, userId: number) {
@@ -96,7 +98,10 @@ export class IssueService {
     priority: IssuePriority | undefined,
     type: IssueType | undefined,
   ) {
-    const project = await this.projectService.getProjectByIdOrFail(projectId);
+    const [project, leader] = await Promise.all([
+      this.projectService.getProjectByIdOrFail(projectId),
+      this.userService.getUserByIdOrFail(userId),
+    ]);
 
     if (!this.projectService.isLeaderOfProject(userId, project)) {
       throw new UnauthorizedException('You cannot create this issue');
@@ -138,9 +143,14 @@ export class IssueService {
       throw new UnauthorizedException('Cannot add label to this issue');
     }
 
-    return this.issueRepo.save(
+    const issue = await this.issueRepo.save(
       new IssueEntity(name, description, assignee.id, reporter.id, project.id, labels, epic?.id, sprint?.id, storyPoint, priority, type),
     );
+
+    this.notificationService.createNotifications(leader, [assignee], issue.id, IssueEntityType, issue.name, NotifEventType.Assigned).then();
+    this.notificationService.createNotifications(leader, [reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Reported).then();
+
+    return issue;
   }
 
   async updateIssue(
@@ -157,7 +167,7 @@ export class IssueService {
     priority: IssuePriority | undefined,
     labelIds: number[] | undefined,
   ) {
-    const issue = await this.getIssueByIdOrFail(issueId);
+    const [issue, leader] = await Promise.all([this.getIssueByIdOrFail(issueId), this.userService.getUserByIdOrFail(userId)]);
 
     const project = await this.projectService.getProjectByIdOrFail(issue.projectId);
 
@@ -165,32 +175,41 @@ export class IssueService {
       throw new UnauthorizedException('You cannot update this issue');
     }
 
+    let isIssueUpdated = false;
+
     if (name !== undefined) {
+      isIssueUpdated = true;
       issue.name = name;
     }
 
     if (description !== undefined) {
+      isIssueUpdated = true;
       issue.description = description;
     }
 
     if (type !== undefined) {
+      isIssueUpdated = true;
       issue.type = type;
     }
 
     if (storyPoint !== undefined) {
+      isIssueUpdated = true;
       issue.storyPoint = storyPoint;
     }
 
     if (priority !== undefined) {
+      isIssueUpdated = true;
       issue.priority = priority;
     }
 
-    const [assignee, reporter, epic, sprint, labels] = await Promise.all([
+    const [assignee, reporter, epic, sprint, labels, oldAssignee, oldReporter] = await Promise.all([
       assigneeId !== undefined ? this.userService.getUserByIdOrFail(assigneeId) : undefined,
       reporterId !== undefined ? this.userService.getUserByIdOrFail(reporterId) : undefined,
       epicId === null ? null : epicId !== undefined ? this.epicService.getEpicByIdOrFail(epicId) : undefined,
       sprintId === null ? null : sprintId !== undefined ? this.sprintService.getSprintByIdOrFail(sprintId) : undefined,
       labelIds !== undefined ? this.labelRepo.findByIds(labelIds) : undefined,
+      this.userService.getUserByIdOrFail(issue.assigneeId),
+      this.userService.getUserByIdOrFail(issue.reporterId),
     ]);
 
     if (assignee !== undefined) {
@@ -200,6 +219,14 @@ export class IssueService {
         !this.projectService.isMemberOfProject(assignee.id, project)
       ) {
         throw new BadRequestException('Assignee is not a member of this project');
+      }
+      if (assignee.id !== oldAssignee.id) {
+        this.notificationService
+          .createNotifications(leader, [assignee], issue.id, IssueEntityType, issue.name, NotifEventType.Assigned)
+          .then();
+        this.notificationService
+          .createNotifications(leader, [oldAssignee], issue.id, IssueEntityType, issue.name, NotifEventType.AssigneeRemoved)
+          .then();
       }
       issue.assigneeId = assignee.id;
     }
@@ -212,6 +239,14 @@ export class IssueService {
       ) {
         throw new BadRequestException('Reporter is not a member of this project');
       }
+      if (reporter.id !== oldReporter.id) {
+        this.notificationService
+          .createNotifications(leader, [reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Reported)
+          .then();
+        this.notificationService
+          .createNotifications(leader, [oldReporter], issue.id, IssueEntityType, issue.name, NotifEventType.ReporterRemoved)
+          .then();
+      }
       issue.reporterId = reporter.id;
     }
 
@@ -219,7 +254,9 @@ export class IssueService {
       if (epic !== null && epic.projectId !== project.id) {
         throw new BadRequestException('Epic not belong to project');
       }
+
       issue.epicId = epic?.id ?? null;
+      isIssueUpdated = true;
     }
 
     if (sprint !== undefined) {
@@ -228,6 +265,7 @@ export class IssueService {
       }
 
       issue.sprintId = sprint?.id ?? null;
+      isIssueUpdated = true;
     }
 
     if (labels !== undefined) {
@@ -236,31 +274,68 @@ export class IssueService {
       }
 
       issue.labels = labels;
+      isIssueUpdated = true;
+    }
+
+    if (isIssueUpdated) {
+      const assigneeAndReporter = [];
+      assigneeAndReporter.push(assignee ?? oldAssignee);
+      assigneeAndReporter.push(reporter ?? oldReporter);
+      this.notificationService
+        .createNotifications(leader, assigneeAndReporter, issue.id, IssueEntityType, issue.name, NotifEventType.Updated)
+        .then();
     }
 
     return this.issueRepo.save(issue);
   }
 
   async updateIssueStatus(issueId: number, userId: number, status: IssueStatus) {
-    const issue = await this.getIssueByIdOrFail(issueId);
+    const [issue, assignee] = await Promise.all([this.getIssueByIdOrFail(issueId), this.userService.getUserByIdOrFail(userId)]);
 
     if (userId !== issue.assigneeId) {
       throw new UnauthorizedException('You cannot update status of this issue');
     }
 
+    const project = await this.projectService.getProjectByIdOrFail(issue.projectId);
+
+    const [leader, reporter] = await Promise.all([
+      this.userService.getUserByIdOrFail(project.leaderId),
+      this.userService.getUserByIdOrFail(issue.reporterId),
+    ]);
+
+    if (issue.status !== status) {
+      this.notificationService.createNotifications(
+        assignee,
+        [leader, reporter],
+        issue.id,
+        IssueEntityType,
+        issue.name,
+        NotifEventType.IssueStatusChanged,
+        issue.status,
+        status,
+      );
+    }
     issue.status = status;
 
     return this.issueRepo.save(issue);
   }
 
   async deleteIssue(issueId: number, userId: number) {
-    const issue = await this.getIssueByIdOrFail(issueId);
+    const [issue, leader] = await Promise.all([this.getIssueByIdOrFail(issueId), this.userService.getUserByIdOrFail(userId)]);
 
-    const project = await this.projectService.getProjectByIdOrFail(issue.projectId);
+    const [project, assignee, reporter] = await Promise.all([
+      this.projectService.getProjectByIdOrFail(issue.projectId),
+      this.userService.getUserByIdOrFail(issue.assigneeId),
+      this.userService.getUserByIdOrFail(issue.reporterId),
+    ]);
 
     if (!this.projectService.isLeaderOfProject(userId, project)) {
       throw new UnauthorizedException('You cannnot delete this issue');
     }
+
+    this.notificationService
+      .createNotifications(leader, [assignee, reporter], issue.id, IssueEntityType, issue.name, NotifEventType.Deleted)
+      .then();
 
     return this.issueRepo.remove(issue);
   }

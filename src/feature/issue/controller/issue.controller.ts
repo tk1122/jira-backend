@@ -81,13 +81,13 @@ export class IssueController {
   @Scopes(PermissionScopes.WriteIssue)
   @ApiOkResponse({ type: IssueEntity })
   updateIssueStatus(@Param('id') issueId: number, @Body() { status }: UpdateIssueStatusBody, @User() { userId }: UserSession) {
-    return this.issueService.updateIssueStatus(issueId, userId, status)
+    return this.issueService.updateIssueStatus(issueId, userId, status);
   }
 
   @Delete(':id')
   @Scopes(PermissionScopes.WriteIssue)
-  @ApiOkResponse({type: IssueEntity})
-  deleteIssue(@Param('id') issueId: number, @User() {userId}: UserSession) {
-    return this.issueService.deleteIssue(issueId, userId)
+  @ApiOkResponse({ type: IssueEntity })
+  deleteIssue(@Param('id') issueId: number, @User() { userId }: UserSession) {
+    return this.issueService.deleteIssue(issueId, userId);
   }
 }
