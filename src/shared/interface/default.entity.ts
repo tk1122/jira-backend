@@ -1,5 +1,5 @@
 import { ApiResponseModelProperty } from '@nestjs/swagger';
-import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 export abstract class DefaultEntity {
   @ApiResponseModelProperty()
@@ -7,10 +7,10 @@ export abstract class DefaultEntity {
   id: number;
 
   @ApiResponseModelProperty()
-  @CreateDateColumn({ select: false, name: 'created_at' })
+  @Column({ type: 'timestamp', select: false, name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @ApiResponseModelProperty()
-  @UpdateDateColumn({ select: false, name: 'updated_at' })
+  @Column({ type: 'timestamp', select: false, name: 'updated_at' })
   updatedAt: Date;
 }
