@@ -38,8 +38,8 @@ export class ProjectService {
     return !(project.pmId !== userId && project.leaderId !== userId && !project.memberIds.includes(userId));
   }
 
-  async createProject(name: string, description: string, pmId: number, leaderId: number) {
-    const [leader, pm] = await Promise.all([
+  async createProject(name: string, description: string, pmId: number, leaderId: number, memberIds: number[]) {
+    const [leader, pm, members] = await Promise.all([
       this.userRepo
         .createQueryBuilder('u')
         .select(['u.id'])
@@ -48,13 +48,14 @@ export class ProjectService {
         .where('r.name = :leaderRole', { leaderRole: Roles.Leader })
         .getOne(),
       this.userService.getUserByIdOrFail(pmId),
+      this.userRepo.findByIds(memberIds)
     ]);
 
     if (!leader) {
       throw new BadRequestException('Leader not found');
     }
 
-    const project = await this.projectRepo.save(new ProjectEntity(name, description, { id: pmId } as UserEntity, leader));
+    const project = await this.projectRepo.save(new ProjectEntity(name, description, { id: pmId } as UserEntity, leader, members!));
 
     this.notifService.createNotifications(pm!, [leader], project.id, ProjectEntityType, project.name, NotifEventType.AddedToProject).then();
 
@@ -145,9 +146,9 @@ export class ProjectService {
       .createQueryBuilder('p')
       .select(['p'])
       .where('p.name LIKE :name', { name: `${name}%` })
-      .innerJoin('p.members', 'm')
-      .innerJoin('p.leader', 'l')
-      .innerJoin('p.pm', 'pm');
+      .leftJoinAndSelect('p.members', 'm')
+      .leftJoinAndSelect('p.leader', 'l')
+      .leftJoinAndSelect('p.pm', 'pm');
 
     if (status !== undefined) {
       getProjectsQuery.andWhere('p.status = :status', { status });
