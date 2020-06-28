@@ -43,6 +43,7 @@ export class ProjectController {
       createProjectBody.description,
       user.userId,
       createProjectBody.leaderId,
+      createProjectBody.memberIds
     );
   }
 

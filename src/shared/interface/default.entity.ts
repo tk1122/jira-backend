@@ -11,6 +11,6 @@ export abstract class DefaultEntity {
   createdAt: Date;
 
   @ApiResponseModelProperty()
-  @Column({ type: 'timestamp', select: false, name: 'updated_at' })
+  @Column({ type: 'timestamp', select: false, name: 'updated_at', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 }

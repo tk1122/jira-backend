@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsArray, IsInt, IsNumber, IsString, ValidateIf } from 'class-validator';
 import { ApiModelProperty } from '@nestjs/swagger';
 
 export class CreateProjectBody {
@@ -13,4 +13,9 @@ export class CreateProjectBody {
   @ApiModelProperty()
   @IsNumber()
   leaderId: number;
+
+  @ApiModelProperty()
+  @IsInt({ each: true })
+  @IsArray()
+  memberIds: number[];
 }
