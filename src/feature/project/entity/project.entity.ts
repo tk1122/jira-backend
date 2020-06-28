@@ -79,7 +79,7 @@ export class ProjectEntity extends DefaultEntity {
   )
   labels: LabelEntity[];
 
-  constructor(name: string, description: string, pm: UserEntity, leader: UserEntity) {
+  constructor(name: string, description: string, pm: UserEntity, leader: UserEntity, members: UserEntity[]) {
     super();
 
     this.name = name;
@@ -88,6 +88,7 @@ export class ProjectEntity extends DefaultEntity {
     this.pm = pm;
     this.status = ProjectStatus.Pending;
     this.entityType = 0;
+    this.members = members;
   }
 }
 
